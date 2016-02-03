@@ -40,18 +40,31 @@ public:
 	~MainWindow();
 
 	void closeEvent(QCloseEvent *event); // Overloaded function
+    void displayPointCloud(QString url);
 
 public Q_SLOTS:
 	/******************************************
 	** Auto-connections (connectSlotsByName())
 	*******************************************/
-    void on_button_connect_clicked(bool check);
+    // Buttons
     void on_button_refresh_topics_clicked(bool check);
     void on_button_subscribe_topic_clicked(bool check);
-
+    void on_button_filter_clicked(bool check);
+    void on_button_add_cloud_clicked(bool check);
+    // Sliders
+    void on_slider_1_valueChanged(int i);
+    void on_slider_2_valueChanged(int i);
+    void on_slider_3_valueChanged(int i);
+    // SpinBoxes
+    void on_spinBox_1_valueChanged(double d);
+    void on_spinBox_2_valueChanged(double d);
+    void on_spinBox_3_valueChanged(double d);
+    // QSpinBoxes
+    void on_filter_box_currentIndexChanged(int i);
     /******************************************
     ** Manual connections
     *******************************************/
+    void setNewIndexInfo(QStringList labels, QList<bool> show);
 
 Q_SIGNALS:
 
@@ -59,10 +72,13 @@ Q_SIGNALS:
 
 private:
 	Ui::MainWindowDesign ui;
+    void initializeUI();
 	QNode qnode;
     QVTKWidget *w;
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     PointCloudManipulator *manipulator;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr displayCloud;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filteredCloud;
 
     // Viewports
     int left;
