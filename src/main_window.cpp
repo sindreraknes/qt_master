@@ -23,17 +23,21 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	, qnode(argc,argv)
 {
     // Initialize UI
-	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
-    QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
-	setWindowIcon(QIcon(":/images/icon.png"));
-//	ui.tab_manager->setCurrentIndex(0); // ensure the first tab is showing - qt-designer should have this already hardwired, but often loses it (settings?).
+    ui.setupUi(this);
+    QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
+    setWindowIcon(QIcon(":/images/icon.png"));
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
+
     // Initialize ROS
     qnode.init();
+
+    // Manipulator / Filter
+    manipulator = new PointCloudManipulator();
+    QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>)));
+
     // Initialize UI
     initializeUI();
-    // Connections
-    QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>)));
+
 
 
 
@@ -213,13 +217,14 @@ void MainWindow::initializeUI()
     ui.groupBox_12->layout()->addWidget(w);
 
     // Set up filter/manipulator
-    manipulator = new PointCloudManipulator();
     ui.filter_box->addItems(manipulator->getFilters());
     QStringList xyz;
     xyz.append("x");
     xyz.append("y");
     xyz.append("z");
     ui.filter_XYZ->addItems(xyz);
+
+
 }
 
 }  // namespace qt_master

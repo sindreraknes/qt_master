@@ -16,7 +16,7 @@ PointCloudManipulator::~PointCloudManipulator(){}
 
 QStringList PointCloudManipulator::getFilters()
 {
-    filterList.append("Filter1");
+    filterList.append("Passthrough");
     filterList.append("Filter2");
 
     return filterList;
@@ -51,7 +51,7 @@ void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
     case 0:
         // PASSTHROUGH FILTER
         labels.append("Minimum:");
-        labels.append("Maximum");
+        labels.append("Maximum:");
         labels.append("");
         show.append(true);
         show.append(true);
