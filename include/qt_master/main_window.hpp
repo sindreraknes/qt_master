@@ -64,7 +64,7 @@ public Q_SLOTS:
     /******************************************
     ** Manual connections
     *******************************************/
-    void setNewIndexInfo(QStringList labels, QList<bool> show);
+    void setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> steps);
 
 Q_SIGNALS:
 

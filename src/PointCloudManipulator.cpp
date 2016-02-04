@@ -1,7 +1,4 @@
-
 #include "../include/qt_master/PointCloudManipulator.hpp"
-#include <iostream>
-
 
 namespace qt_master {
 
@@ -17,7 +14,11 @@ PointCloudManipulator::~PointCloudManipulator(){}
 QStringList PointCloudManipulator::getFilters()
 {
     filterList.append("Passthrough");
-    filterList.append("Filter2");
+    filterList.append("VoxelGrid");
+    filterList.append("Median");
+    filterList.append("Filter3");
+    filterList.append("Filter3");
+    filterList.append("Filter3");
 
     return filterList;
 }
@@ -32,6 +33,7 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
         break;
     case 1:
         // CODE
+        filterVoxelGrid(inCloud, outCloud, d1);
         break;
     case 2:
         // CODE
@@ -44,26 +46,40 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
 
 void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
 {
-    QStringList labels;
+    QList<QString> labels;
+    labels.append("");
+    labels.append("");
+    labels.append("");
     QList<bool> show;
+    show.append(false);
+    show.append(false);
+    show.append(false);
+    show.append(false);
+    QList<double> steps;
+    steps.append(0.1);
+    steps.append(0.1);
+    steps.append(0.1);
+
     switch(selectedFilter)
     {
     case 0:
         // PASSTHROUGH FILTER
-        labels.append("Minimum:");
-        labels.append("Maximum:");
-        labels.append("");
-        show.append(true);
-        show.append(true);
-        show.append(false);
-        show.append(true);
-        Q_EMIT sendNewIndexInfo(labels, show);
+        labels.replace(0, "Minimum:");
+        labels.replace(0, "Maximum:");
+        show.replace(0,true);
+        show.replace(1,true);
+        show.replace(3,true);
+        Q_EMIT sendNewIndexInfo(labels, show, steps);
         break;
     case 1:
-        // CODE
+        // VOXEL GRID FILTER
+        labels.replace(0, "Leaf size:");
+        show.replace(0, true);
+        steps.replace(0, 0.001);
+        Q_EMIT sendNewIndexInfo(labels, show, steps);
         break;
     case 2:
-        // CODE
+        // MEDIAN FILTER
         break;
     default:
         ;
@@ -80,8 +96,12 @@ void PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZ>::Pt
     passThroughFilter.filter(*outCloud);
 }
 
-
-
-
+void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double leafSize)
+{
+    float leaf = leafSize;
+    voxelGridFilter.setInputCloud(inCloud);
+    voxelGridFilter.setLeafSize(leaf, leaf, leaf);
+    voxelGridFilter.filter(*outCloud);
+}
 
 }

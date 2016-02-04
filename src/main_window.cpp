@@ -33,30 +33,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     // Manipulator / Filter
     manipulator = new PointCloudManipulator();
-    QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>)));
+    QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>, QList<double>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>, QList<double>)));
 
     // Initialize UI
     initializeUI();
-
-
-
-
-
 }
 
 MainWindow::~MainWindow() {}
-
-/*****************************************************************************
-** Implementation [Slots]
-*****************************************************************************/
-
-
-
-/*****************************************************************************
-** Implementation [Menu]
-*****************************************************************************/
-
-
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -65,8 +48,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::displayPointCloud(QString url)
 {
-
-    std::cout << url.toUtf8().constData() << std::endl;
     pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
     if(pcl::io::loadPCDFile<pcl::PointXYZ>(url.toUtf8().constData(), *tmpCloud) == -1){
         std::cout << "Could not load file" << std::endl;
@@ -79,7 +60,6 @@ void MainWindow::displayPointCloud(QString url)
     }
     w->update();
 }
-
 
 
 void MainWindow::on_button_refresh_topics_clicked(bool check)
@@ -101,6 +81,8 @@ void MainWindow::on_button_filter_clicked(bool check)
     pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
     manipulator->runFilter(ui.filter_box->currentIndex(), displayCloud, tmpCloud, ui.spinBox_1->value(), ui.spinBox_2->value(), ui.spinBox_3->value(), ui.filter_XYZ->currentText());
     filteredCloud = tmpCloud;
+    // Check if we need new visualizer???????? Then do shit.
+    // TODOOOOOOOOOOO
     if(!viewer->updatePointCloud(filteredCloud, "filteredCloud")){
         viewer->addPointCloud(filteredCloud, "filteredCloud", right);
         w->update();
@@ -111,7 +93,6 @@ void MainWindow::on_button_filter_clicked(bool check)
 void MainWindow::on_button_add_cloud_clicked(bool check)
 {
     QString fileName;
-    //QString filters = "PointClouds (*.pcd);; PointClouds (*.PCD)";
     fileName = QFileDialog::getOpenFileName(this,tr("Choose a .pcd file to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
     if(fileName.length() != 0){
         displayPointCloud(fileName);
@@ -154,8 +135,8 @@ void MainWindow::on_slider_3_valueChanged(int i)
 
 void MainWindow::on_spinBox_1_valueChanged(double d)
 {
-    int i = d*10;
-    ui.slider_1->setValue(i);
+   // int i = d*10;
+   // ui.slider_1->setValue(i);
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
     }
@@ -163,8 +144,8 @@ void MainWindow::on_spinBox_1_valueChanged(double d)
 
 void MainWindow::on_spinBox_2_valueChanged(double d)
 {
-    int i = d*10;
-    ui.slider_2->setValue(i);
+   // int i = d*10;
+   // ui.slider_2->setValue(i);
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
     }
@@ -172,8 +153,8 @@ void MainWindow::on_spinBox_2_valueChanged(double d)
 
 void MainWindow::on_spinBox_3_valueChanged(double d)
 {
-    int i = d*10;
-    ui.slider_3->setValue(i);
+   // int i = d*10;
+   // ui.slider_3->setValue(i);
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
     }
@@ -184,7 +165,7 @@ void MainWindow::on_filter_box_currentIndexChanged(int i)
     manipulator->getNewIndexInfo(i);
 }
 
-void MainWindow::setNewIndexInfo(QStringList labels, QList<bool> show)
+void MainWindow::setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> steps)
 {
     ui.label_f_1->setText(labels.at(0));
     ui.label_f_2->setText(labels.at(1));
@@ -195,10 +176,13 @@ void MainWindow::setNewIndexInfo(QStringList labels, QList<bool> show)
     ui.spinBox_1->setVisible(show.at(0));
     ui.spinBox_2->setVisible(show.at(1));
     ui.spinBox_3->setVisible(show.at(2));
+    ui.spinBox_1->setSingleStep(steps.at(0));
+    ui.spinBox_2->setSingleStep(steps.at(1));
+    ui.spinBox_3->setSingleStep(steps.at(2));
     ui.slider_1->setVisible(show.at(0));
     ui.slider_2->setVisible(show.at(1));
     ui.slider_3->setVisible(show.at(2));
-    ui.auto_check->setVisible(show.at(3));
+    ui.filter_XYZ->setVisible(show.at(3));
 }
 
 void MainWindow::initializeUI()
@@ -213,7 +197,6 @@ void MainWindow::initializeUI()
     viewer->createViewPort(0.5, 0, 1, 1, right);
     w->update();
     viewer->setCameraPosition( 0.146598, 0.0941454, -4.95334, -0.0857047, -0.0396425, 0.600109, -0.00146821, -0.999707, -0.0241453, 0);
-    //viewer->updateCamera();
     ui.groupBox_12->layout()->addWidget(w);
 
     // Set up filter/manipulator
@@ -223,8 +206,6 @@ void MainWindow::initializeUI()
     xyz.append("y");
     xyz.append("z");
     ui.filter_XYZ->addItems(xyz);
-
-
 }
 
 }  // namespace qt_master
