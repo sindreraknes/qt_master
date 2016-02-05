@@ -17,6 +17,9 @@
    <iconset resource="../resources/images.qrc">
     <normaloff>:/images/icon.png</normaloff>:/images/icon.png</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="locale">
    <locale language="English" country="Australia"/>
   </property>
@@ -92,7 +95,6 @@
          <property name="title">
           <string/>
          </property>
-         <layout class="QGridLayout" name="gridLayout_3"/>
         </widget>
        </item>
       </layout>
@@ -125,16 +127,27 @@
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dock_status">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
    <property name="minimumSize">
     <size>
-     <width>499</width>
-     <height>401</height>
+     <width>591</width>
+     <height>434</height>
     </size>
+   </property>
+   <property name="font">
+    <font>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="floating">
+    <bool>false</bool>
    </property>
    <property name="allowedAreas">
     <set>Qt::RightDockWidgetArea</set>
@@ -146,7 +159,16 @@
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
@@ -162,50 +184,59 @@
            <property name="title">
             <string/>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
+           </property>
            <layout class="QGridLayout" name="gridLayout">
-            <item row="0" column="1" colspan="2">
-             <widget class="QComboBox" name="filter_box"/>
-            </item>
-            <item row="8" column="1">
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_f_1">
-              <property name="text">
-               <string>TextLabel</string>
-              </property>
-             </widget>
-            </item>
             <item row="5" column="1">
              <widget class="QComboBox" name="filter_XYZ"/>
             </item>
-            <item row="6" column="2">
-             <widget class="QPushButton" name="button_filter">
-              <property name="text">
-               <string>Compute filter</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QSlider" name="slider_3">
+            <item row="3" column="2">
+             <widget class="QSlider" name="slider_2">
               <property name="minimum">
-               <number>-50</number>
+               <number>0</number>
               </property>
               <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
                <number>50</number>
               </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QDoubleSpinBox" name="spinBox_2">
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>-5.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>5.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QCheckBox" name="auto_check">
+              <property name="text">
+               <string>Auto Filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_f_3">
+              <property name="text">
+               <string>TextLabel</string>
               </property>
              </widget>
             </item>
@@ -225,26 +256,62 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_f_3">
+            <item row="7" column="2">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="10" column="1">
+             <widget class="QPushButton" name="button_add_cloud">
               <property name="text">
-               <string>TextLabel</string>
+               <string>Add PointCloud</string>
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
-             <widget class="QCheckBox" name="auto_check">
+            <item row="10" column="2">
+             <widget class="QPushButton" name="pushButton">
               <property name="text">
-               <string>Auto Filter</string>
+               <string>Save Filtered Cloud</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="2">
-             <widget class="QSlider" name="slider_1">
+            <item row="4" column="1">
+             <widget class="QDoubleSpinBox" name="spinBox_3">
+              <property name="decimals">
+               <number>3</number>
+              </property>
               <property name="minimum">
-               <number>-50</number>
+               <double>-99.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="2">
+             <widget class="QPushButton" name="button_filter">
+              <property name="text">
+               <string>Compute filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QSlider" name="slider_3">
+              <property name="minimum">
+               <number>0</number>
               </property>
               <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
                <number>50</number>
               </property>
               <property name="orientation">
@@ -266,41 +333,15 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="spinBox_2">
-              <property name="decimals">
-               <number>3</number>
-              </property>
+            <item row="2" column="2">
+             <widget class="QSlider" name="slider_1">
               <property name="minimum">
-               <double>-5.000000000000000</double>
+               <number>0</number>
               </property>
               <property name="maximum">
-               <double>5.000000000000000</double>
+               <number>100</number>
               </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QDoubleSpinBox" name="spinBox_3">
-              <property name="decimals">
-               <number>3</number>
-              </property>
-              <property name="minimum">
-               <double>-99.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="QSlider" name="slider_2">
-              <property name="minimum">
-               <number>-50</number>
-              </property>
-              <property name="maximum">
+              <property name="value">
                <number>50</number>
               </property>
               <property name="orientation">
@@ -308,17 +349,20 @@
               </property>
              </widget>
             </item>
-            <item row="9" column="2">
-             <widget class="QPushButton" name="pushButton">
+            <item row="0" column="1" colspan="2">
+             <widget class="QComboBox" name="filter_box"/>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_f_1">
               <property name="text">
-               <string>Save Filtered Cloud</string>
+               <string>TextLabel</string>
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
-             <widget class="QPushButton" name="button_add_cloud">
+            <item row="8" column="2">
+             <widget class="QPushButton" name="button_reload_cloud">
               <property name="text">
-               <string>Add PointCloud</string>
+               <string>Reload Filtered Cloud</string>
               </property>
              </widget>
             </item>

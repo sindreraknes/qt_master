@@ -20,6 +20,7 @@
 #include <QVTKWidget.h>
 #include "PointCloudManipulator.hpp"
 
+
 /*****************************************************************************
 ** Namespace
 *****************************************************************************/
@@ -41,6 +42,7 @@ public:
 
 	void closeEvent(QCloseEvent *event); // Overloaded function
     void displayPointCloud(QString url);
+    //void displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 public Q_SLOTS:
 	/******************************************
@@ -51,6 +53,7 @@ public Q_SLOTS:
     void on_button_subscribe_topic_clicked(bool check);
     void on_button_filter_clicked(bool check);
     void on_button_add_cloud_clicked(bool check);
+    void on_button_reload_cloud_clicked(bool check);
     // Sliders
     void on_slider_1_valueChanged(int i);
     void on_slider_2_valueChanged(int i);
@@ -64,7 +67,9 @@ public Q_SLOTS:
     /******************************************
     ** Manual connections
     *******************************************/
-    void setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> steps);
+    void setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);
+    void setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer> vis);
+    void displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 Q_SIGNALS:
 
@@ -74,15 +79,15 @@ private:
 	Ui::MainWindowDesign ui;
     void initializeUI();
 	QNode qnode;
-    QVTKWidget *w;
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+    QVTKWidget *w1;
+    QVTKWidget *w2;
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer1;
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
     PointCloudManipulator *manipulator;
     pcl::PointCloud<pcl::PointXYZ>::Ptr displayCloud;
     pcl::PointCloud<pcl::PointXYZ>::Ptr filteredCloud;
-
-    // Viewports
-    int left;
-    int right;
+    std::vector<pcl::visualization::Camera> cam;
+    bool changedFilter;
 
 };
 
