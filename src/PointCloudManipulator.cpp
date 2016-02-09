@@ -17,7 +17,7 @@ QStringList PointCloudManipulator::getFilters()
     filterList.append("VoxelGrid");
     filterList.append("Median");
     filterList.append("Normals");
-    filterList.append("Filter3");
+    filterList.append("Translate");
     filterList.append("Filter3");
 
     return filterList;
@@ -28,22 +28,46 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
     switch(selectedFilter)
     {
     case 0:
-        // CODE
+        // PASSTHROUGH FILTER
         filterPassThrough(inCloud, outCloud, d1, d2, xyz);
+        lastFiltered = "Passthrough filter, ";
+        lastFiltered.append(" Min: ");
+        lastFiltered.append(QString::number(d1));
+        lastFiltered.append(" Max: ");
+        lastFiltered.append(QString::number(d2));
+        lastFiltered.append(" Field: ");
+        lastFiltered.append(xyz);
         break;
     case 1:
-        // CODE
+        // VOXEL GRID FILTER
         filterVoxelGrid(inCloud, outCloud, d1);
+        lastFiltered = "VoxelGrid filter, ";
+        lastFiltered.append(" Leaf size : ");
+        lastFiltered.append(QString::number(d1));
         break;
     case 2:
-        // CODE
+        // MEDIAN FILTER
         filterMedian(inCloud, outCloud, d1, d2);
+        lastFiltered = "Median filter, ";
+        lastFiltered.append(" Window size: ");
+        lastFiltered.append(QString::number(d1));
+        lastFiltered.append(" Max allowed movement: ");
+        lastFiltered.append(QString::number(d2));
         break;
     case 3:
-        //CODE
+        // NEW VISUALIZER
         // Send new vis with normals filtered shit
         filterNormal(inCloud, d1, d2);
+        lastFiltered = "Normals filter, ";
+        lastFiltered.append(" Radius: ");
+        lastFiltered.append(QString::number(d1));
+        lastFiltered.append(" Nr. to display: ");
+        lastFiltered.append(QString::number(d2));
         break;
+    case 4:
+        // TRANSLATION MATRIX
+        //
+        //translateCloud(inCloud, d1, d2, d3);
     default:
         ;
         // SOMETHING WENT WRONG
@@ -118,6 +142,21 @@ void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
         stepsAndRange.replace(5, 1);
         stepsAndRange.replace(6, 10);
         Q_EMIT sendNewIndexInfo(labels, show, stepsAndRange);
+        break;
+    case 4:
+        // TRANSLATION
+        labels.replace(0, "Transl. X: ");
+        labels.replace(1, "Transl. Z: ");
+        labels.replace(2, "Rotation Y: ");
+        show.replace(0, true);
+        show.replace(1, true);
+        show.replace(2, true);
+        stepsAndRange.replace(2, 1.0);
+        stepsAndRange.replace(7, 0.0);
+        stepsAndRange.replace(8, 360.0);
+
+        Q_EMIT sendNewIndexInfo(labels, show, stepsAndRange);
+        break;
     default:
         ;
         // SOMETHING WENT WRONG
@@ -131,7 +170,7 @@ void PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZ>::Pt
     passThroughFilter.setFilterLimits(limitMin, limitMax);
     passThroughFilter.setKeepOrganized(true);
     passThroughFilter.filter(*outCloud);
-    Q_EMIT sendNewPointCloud(outCloud);
+    Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
 void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double leafSize)
@@ -140,7 +179,7 @@ void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr 
     voxelGridFilter.setInputCloud(inCloud);
     voxelGridFilter.setLeafSize(leaf, leaf, leaf);
     voxelGridFilter.filter(*outCloud);
-    Q_EMIT sendNewPointCloud(outCloud);
+    Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
 void PointCloudManipulator::filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double windowSize, double maxMovement)
@@ -150,7 +189,7 @@ void PointCloudManipulator::filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inC
     medianFilter.setWindowSize(windowSizeTmp);
     medianFilter.setMaxAllowedMovement(maxMovement);
     medianFilter.applyFilter(*outCloud);
-    Q_EMIT sendNewPointCloud(outCloud);
+    Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
 void PointCloudManipulator::filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double radius, double nrToDisplay)
@@ -170,10 +209,34 @@ void PointCloudManipulator::filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inC
     Q_EMIT sendNewVisualizer(visualizer);
 }
 
+void PointCloudManipulator::translateCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr  inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr translatedCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+    double x = M_PI/180*rX;
+    double y = M_PI/180*rY;
+    double z = M_PI/180*rZ;
+    transform << cos(y) * cos(z), -cos(y) * sin(z), sin(y), tX,
+            (cos(x) * sin(z)) + (cos(z) * sin(x) * sin(y)), (cos(x) * cos(z)) - (sin(x) * sin(y) * sin(z)), -cos(y) *
+                                                                                                            sin(x), tY,
+            (sin(x) * sin(z)) - (cos(x) * cos(z) * sin(y)), (cos(z) * sin(x)) + (cos(x) * sin(y) * sin(z)), cos(x) *
+                                                                                                            cos(y), tZ,
+            0.0, 0.0, 0.0, 1.0;
+
+    pcl::transformPointCloud(*inCloud, *translatedCloud, transform);
+    Q_EMIT sendNewPointCloud(translatedCloud, "translatedCloud");
+
+}
+
 void PointCloudManipulator::getNewVisualizer(int selectedFilter)
 {
     visualizer.reset(new pcl::visualization::PCLVisualizer ("viewer2", false));
     Q_EMIT sendNewVisualizer(visualizer);
+}
+
+QString PointCloudManipulator::getLastFiltered()
+{
+    return lastFiltered;
 }
 
 }

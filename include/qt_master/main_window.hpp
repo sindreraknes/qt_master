@@ -40,9 +40,15 @@ public:
 	MainWindow(int argc, char** argv, QWidget *parent = 0);
 	~MainWindow();
 
+    //! metodebeskrivelse
+    /*!
+     *
+     * \param *event
+     * \return
+     */
 	void closeEvent(QCloseEvent *event); // Overloaded function
-    void displayPointCloud(QString url);
-    //void displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+    void displayPointCloud(QString url, QString name);
+    void displayPointCloudLeft(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name);
 
 public Q_SLOTS:
 	/******************************************
@@ -54,14 +60,31 @@ public Q_SLOTS:
     void on_button_filter_clicked(bool check);
     void on_button_add_cloud_clicked(bool check);
     void on_button_reload_cloud_clicked(bool check);
+    void on_button_transform_clicked(bool check);
     // Sliders
+    // Filters
     void on_slider_1_valueChanged(int i);
     void on_slider_2_valueChanged(int i);
     void on_slider_3_valueChanged(int i);
+    // Transformation
+    void on_srotX_valueChanged(int i);
+    void on_srotY_valueChanged(int i);
+    void on_srotZ_valueChanged(int i);
+    void on_stranslX_valueChanged(int i);
+    void on_stranslY_valueChanged(int i);
+    void on_stranslZ_valueChanged(int i);
     // SpinBoxes
+    // Filters
     void on_spinBox_1_valueChanged(double d);
     void on_spinBox_2_valueChanged(double d);
     void on_spinBox_3_valueChanged(double d);
+    // Transformation
+    void on_rotX_valueChanged(double d);
+    void on_rotY_valueChanged(double d);
+    void on_rotZ_valueChanged(double d);
+    void on_translX_valueChanged(double d);
+    void on_translY_valueChanged(double d);
+    void on_translZ_valueChanged(double d);
     // QSpinBoxes
     void on_filter_box_currentIndexChanged(int i);
     /******************************************
@@ -69,7 +92,7 @@ public Q_SLOTS:
     *******************************************/
     void setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);
     void setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer> vis);
-    void displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+    void displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name);
 
 Q_SIGNALS:
 

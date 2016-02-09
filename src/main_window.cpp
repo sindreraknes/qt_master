@@ -36,7 +36,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     manipulator = new PointCloudManipulator();
     QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>, QList<double>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>, QList<double>)));
     QObject::connect(manipulator, SIGNAL(sendNewVisualizer(boost::shared_ptr<pcl::visualization::PCLVisualizer>)), this, SLOT(setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer>)));
-    QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr)));
+    QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr, QString)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr, QString)));
 
     // Initialize UI
     initializeUI();
@@ -49,7 +49,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void MainWindow::displayPointCloud(QString url)
+void MainWindow::displayPointCloud(QString url, QString name)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
     if(pcl::io::loadPCDFile<pcl::PointXYZ>(url.toUtf8().constData(), *tmpCloud) == -1){
@@ -57,17 +57,26 @@ void MainWindow::displayPointCloud(QString url)
         return;
     }
     displayCloud = tmpCloud;
-    if(!viewer1->updatePointCloud(displayCloud, "displayCloud")){
-        viewer1->addPointCloud(displayCloud, "displayCloud");
+    if(!viewer1->updatePointCloud(displayCloud, name.toUtf8().constData())){
+        viewer1->addPointCloud(displayCloud, name.toUtf8().constData());
     }
     w1->update();
 }
 
-void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+void MainWindow::displayPointCloudLeft(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name)
+{
+    displayCloud = cloud;
+    if(!viewer1->updatePointCloud(displayCloud, name.toUtf8().constData())){
+        viewer1->addPointCloud(displayCloud, name.toUtf8().constData());
+    }
+    w1->update();
+}
+
+void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name)
 {
     filteredCloud = cloud;
-    if(!viewer2->updatePointCloud(filteredCloud, "filteredCloud")){
-        viewer2->addPointCloud(filteredCloud, "filteredCloud");
+    if(!viewer2->updatePointCloud(filteredCloud, name.toUtf8().constData())){
+        viewer2->addPointCloud(filteredCloud, name.toUtf8().constData());
     }
     w2->update();
 }
@@ -82,6 +91,9 @@ void MainWindow::on_button_refresh_topics_clicked(bool check)
 void MainWindow::on_button_subscribe_topic_clicked(bool check)
 {
     ui.dock_status->setVisible(true);
+
+
+
     if(ui.comboBox->currentText().length() != 0){
 
     }
@@ -99,23 +111,36 @@ void MainWindow::on_button_filter_clicked(bool check)
 
 void MainWindow::on_button_add_cloud_clicked(bool check)
 {
-    QString fileName;
-    fileName = QFileDialog::getOpenFileName(this,tr("Choose a .pcd file to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
-    if(fileName.length() != 0){
-        displayPointCloud(fileName);
-    }
-    else{
-        std::cout << "Error while loading file" << std::endl;
-    }
+    QStringList fileNames;
+    fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
 
+    for (int i = 0; i<fileNames.size(); i++){
+        pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+        if(i == 0){
+            displayCloud = tmpCloud;
+        }
+        else{
+            std::cout << i << std::endl;
+            *displayCloud += *tmpCloud;
+        }
+    }
+    displayPointCloudLeft(displayCloud, "displayCloud");
 
 }
 
 void MainWindow::on_button_reload_cloud_clicked(bool check)
 {
     pcl::io::savePCDFileASCII("/home/minions/tmp_cloud.pcd", *filteredCloud);
-    displayPointCloud("/home/minions/tmp_cloud.pcd");
+    displayPointCloud("/home/minions/tmp_cloud.pcd", "displayCloud");
 
+    ui.logBox->append(manipulator->getLastFiltered());
+
+}
+
+void MainWindow::on_button_transform_clicked(bool check)
+{
+    manipulator->translateCloud(displayCloud, ui.rotX->value(), ui.rotY->value(), ui.rotZ->value(), ui.translX->value(), ui.translY->value(), ui.translZ->value());
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)
@@ -164,6 +189,38 @@ void MainWindow::on_slider_3_valueChanged(int i)
     }
 }
 
+void MainWindow::on_srotX_valueChanged(int i)
+{
+    double d = i;
+    ui.rotX->setValue(d);
+}
+void MainWindow::on_srotY_valueChanged(int i)
+{
+    double d = i;
+    ui.rotY->setValue(d);
+}
+void MainWindow::on_srotZ_valueChanged(int i)
+{
+    double d = i;
+    ui.rotZ->setValue(d);
+}
+
+void MainWindow::on_stranslX_valueChanged(int i)
+{
+    double d = i;
+    ui.translX->setValue(d);
+}
+void MainWindow::on_stranslY_valueChanged(int i)
+{
+    double d = i;
+    ui.translY->setValue(d);
+}
+void MainWindow::on_stranslZ_valueChanged(int i)
+{
+    double d = i;
+    ui.translZ->setValue(d);
+}
+
 void MainWindow::on_spinBox_1_valueChanged(double d)
 {
     if(ui.auto_check->isChecked()){
@@ -182,6 +239,44 @@ void MainWindow::on_spinBox_3_valueChanged(double d)
 {
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
+    }
+}
+
+void MainWindow::on_rotX_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
+    }
+}
+void MainWindow::on_rotY_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
+    }
+}
+void MainWindow::on_rotZ_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
+    }
+}
+
+void MainWindow::on_translX_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
+    }
+}
+void MainWindow::on_translY_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
+    }
+}
+void MainWindow::on_translZ_valueChanged(double d)
+{
+    if(ui.auto_trans->isChecked()){
+        Q_EMIT on_button_transform_clicked(true);
     }
 }
 
