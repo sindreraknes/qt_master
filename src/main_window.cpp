@@ -93,11 +93,11 @@ void MainWindow::on_button_subscribe_topic_clicked(bool check)
     ui.dock_status->setVisible(true);
 
 
-
     if(ui.comboBox->currentText().length() != 0){
 
     }
 }
+
 
 void MainWindow::on_button_filter_clicked(bool check)
 {
