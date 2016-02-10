@@ -163,7 +163,7 @@ void MainWindow::on_button_tester_clicked(bool check)
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(1).toUtf8().constData(), *cloud2);
 
-    manipulator->tester(cloud1, cloud2);
+    manipulator->tester2(cloud1, cloud2);
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)

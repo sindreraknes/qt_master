@@ -59,6 +59,12 @@ public:
     // TESTING NEW SHIT
     void keyPointsISS(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
     void keyPointsNARF(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+    // This is connected
+    void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
+    pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
+
+    /**
+    // This is connected
     void tester(pcl::PointCloud<pcl::PointXYZ>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZ>::Ptr pointsIn2);
     void computeNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn, float normalRadius, pcl::PointCloud<pcl::Normal>::Ptr normal);
     void computeKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn,float minScale, int nrOctaves, int nrScalesPerOctaves, float minContrast,
@@ -76,6 +82,7 @@ public:
                                    const pcl::PointCloud<pcl::PointWithScale>::Ptr keypoints2,
                                    const std::vector<int> &correspondences,
                                    const std::vector<float> &correspondence_scores);
+                                   */
 
 
 Q_SIGNALS:
