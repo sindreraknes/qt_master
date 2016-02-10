@@ -98,6 +98,17 @@ void MainWindow::on_button_subscribe_topic_clicked(bool check)
     }
 }
 
+void MainWindow::on_button_save_filtered_cloud_clicked(bool check)
+{
+    QString selFilter="PCD files (*.pcd)";
+    QString fileName = QFileDialog::getSaveFileName(this,"Save file",QDir::currentPath(),
+        "PCD files (*.pcd)",&selFilter);
+    if(!fileName.endsWith(".pcd",Qt::CaseInsensitive)){
+        fileName.append(".pcd");
+    }
+    pcl::io::savePCDFileASCII(fileName.toUtf8().constData(), *filteredCloud);
+}
+
 
 void MainWindow::on_button_filter_clicked(bool check)
 {
@@ -141,6 +152,18 @@ void MainWindow::on_button_reload_cloud_clicked(bool check)
 void MainWindow::on_button_transform_clicked(bool check)
 {
     manipulator->translateCloud(displayCloud, ui.rotX->value(), ui.rotY->value(), ui.rotZ->value(), ui.translX->value(), ui.translY->value(), ui.translZ->value());
+}
+
+void MainWindow::on_button_tester_clicked(bool check)
+{
+    QStringList fileNames;
+    fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(0).toUtf8().constData(), *cloud1);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(1).toUtf8().constData(), *cloud2);
+
+    manipulator->tester(cloud1, cloud2);
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)

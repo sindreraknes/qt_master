@@ -57,10 +57,13 @@ public Q_SLOTS:
     // Buttons
     void on_button_refresh_topics_clicked(bool check);
     void on_button_subscribe_topic_clicked(bool check);
+    void on_button_save_filtered_cloud_clicked(bool check);
     void on_button_filter_clicked(bool check);
     void on_button_add_cloud_clicked(bool check);
     void on_button_reload_cloud_clicked(bool check);
     void on_button_transform_clicked(bool check);
+
+    void on_button_tester_clicked(bool check);
     // Sliders
     // Filters
     void on_slider_1_valueChanged(int i);
