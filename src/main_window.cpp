@@ -40,7 +40,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     // Initialize UI
     initializeUI();
-    Q_EMIT on_button_tester_clicked(true);
+    //Q_EMIT on_button_tester_clicked(true);
 }
 
 MainWindow::~MainWindow() {}

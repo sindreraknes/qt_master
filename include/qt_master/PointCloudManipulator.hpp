@@ -40,6 +40,7 @@
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/features/shot.h>
 
 namespace qt_master {
 

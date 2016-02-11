@@ -21,6 +21,7 @@ QStringList PointCloudManipulator::getFilters()
     filterList.append("Filter3");
 
     return filterList;
+
 }
 
 void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud,pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double d1, double d2, double d3, QString xyz)
@@ -443,13 +444,15 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     PointCloudFeatures features;
     features.points = inCloud;
     features.normals = computeSurfaceNormals(inCloud, 0.05);
-    std::cout << "Did Normals" << std::endl;
+    std::cout << "Found normals: " ;
+    std::cout << features.normals->size() << std::endl;
     // CONTRAST IS THE LAST PART
     features.keyPoints = detectKeyPoints(inCloud, features.normals, 0.01, 3, 3, 0);
-    std::cout << "Did keypoints" << std::endl;
+    std::cout << "Found  keypoints: " ;
     std::cout << features.keyPoints->size() << std::endl;
     features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.1);
-    std::cout << "Did descriptors" << std::endl;
+    std::cout << "Found descriptors: " ;
+    std::cout << features.localDescriptors->size() << std::endl;
     return features;
 }
 
@@ -486,7 +489,6 @@ void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointX
     const Eigen::Quaternionf no_rotation (0, 0, 0, 0);
     pcl::transformPointCloud (*points1, *points_left, -translate, no_rotation);
     pcl::transformPointCloud (*keyPoints1, *keypoints_left, -translate, no_rotation);
-
     // Shift the second clouds' points to the right
     pcl::transformPointCloud (*points2, *points_right, translate, no_rotation);
     pcl::transformPointCloud (*keyPoints2, *keypoints_right, translate, no_rotation);
@@ -502,7 +504,6 @@ void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointX
     if (maxToDisplay >= temp.size ())
       maxToDisplay = temp.size () - 1;
     float threshold = temp[maxToDisplay];
-    std::cout << threshold << std::endl;
     // Draw lines between the best corresponding points
     for (size_t i = 0; i < keypoints_left->size (); ++i)
     {
@@ -510,11 +511,9 @@ void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointX
       {
         continue; // Don't draw weak correspondences
       }
-
       // Get the pair of points
       const pcl::PointXYZRGB & p_left = keypoints_left->points[i];
       const pcl::PointXYZRGB & p_right = keypoints_right->points[correspondences[i]];
-
       // Generate a random (bright) color
       double r = (rand() % 100);
       double g = (rand() % 100);
@@ -523,20 +522,14 @@ void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointX
       r /= max_channel;
       g /= max_channel;
       b /= max_channel;
-
       // Generate a unique string for each line
       std::stringstream ss ("line");
       ss << i;
-
       // Draw the line
       vis.addLine (p_left, p_right, r, g, b, ss.str ());
     }
-
     vis.resetCamera ();
     vis.spin ();
-
-
-
 }
 
 
@@ -565,10 +558,9 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
     PointCloudFeatures features2 = computeFeatures(points2);
     Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
     tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
-
     std::cout << tform << std::endl;
+
     pcl::visualization::PCLVisualizer vis;
-//    pcl::visualization::PCLHistogramVisualizer hisvis;
     int a = 0;
     int b = 1;
     vis.createViewPort(0, 0, 0.5, 1, a);
@@ -593,29 +585,18 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
 
     std::vector<int> correspondences;
+    std::vector<int> correspondences2;
     std::vector<float> correspondenceScores;
+    std::vector<float> correspondenceScores2;
     findFeatureCorrespondences(features1.localDescriptors, features2.localDescriptors, correspondences, correspondenceScores);
+    findFeatureCorrespondences(features2.localDescriptors, features1.localDescriptors, correspondences2, correspondenceScores2);
     visualizeCorrespondences(features1.points,features1.keyPoints,features2.points,features2.keyPoints,correspondences,correspondenceScores,features1.keyPoints->size());
 
 // TODO
     // http://robotica.unileon.es/mediawiki/index.php/PCL/OpenNI_tutorial_5:_3D_object_recognition_(pipeline)#Matching
     // MATCHING
-
-//    pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZRGB> sac;
-
-//    boost::shared_ptr<pcl::Correspondences> corr_result_rej (new pcl::Correspondences);
-//    sac.setInputSource(features1.points);
-//    sac.setInputTarget(features2.points);
-//    sac.setInlierThreshold(1000);
-//    sac.setMaximumIterations(1000);
-//    sac.setInputCorrespondences(corr);
-
-//    sac.getCorrespondences(*corr_result_rej);
-//    Eigen::Matrix4f transform_res_from_SAC = sac.getBestTransformation();
-//    std::cout << transform_res_from_SAC << std::endl;
-
-
-
+    // filterCorrespondenses -- > source2target_  [std::vector<int>]   target2source_ [std::vector<int>]     correspondences_ [pcl::CorrespondencesPtr]
+    //  source_keypoints_ [pcl::PointCloud<pcl::PointXYZI>] target_keypoints_
 }
 
 
@@ -630,7 +611,6 @@ double PointCloudManipulator::computeCloudResolution(const pcl::PointCloud<pcl::
         std::vector<float> squaredDistances(2);
         pcl::search::KdTree<pcl::PointXYZ> tree;
         tree.setInputCloud(cloud);
-
         for (size_t i = 0; i < cloud->size(); ++i)
         {
             if (! pcl_isfinite((*cloud)[i].x))
