@@ -4,6 +4,7 @@
 
 #include <QStringList>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/histogram_visualizer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/median_filter.h>
@@ -29,6 +30,7 @@
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/features/normal_3d.h"
 #include "pcl/features/pfh.h"
+#include "pcl/features/fpfh.h"
 #include "pcl/keypoints/sift_keypoint.h"
 #include <pcl/registration/transforms.h>
 #include <pcl/visualization/pcl_visualizer.h>
@@ -36,6 +38,8 @@
 // DUNNO
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
 
 namespace qt_master {
 
@@ -62,27 +66,31 @@ public:
     // This is connected
     void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
     pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals, float minScale,
+                                                           int nrOctaves, int nrScalesPerOctave, float minContrast);
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
+                                                                       pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius);
+    Eigen::Matrix4f computeInitialAlignment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors,
+                                            pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors,
+                                            float minSampleDistance, float maxCorrespondenceDistance, int nrIterations);
 
-    /**
-    // This is connected
-    void tester(pcl::PointCloud<pcl::PointXYZ>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZ>::Ptr pointsIn2);
-    void computeNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn, float normalRadius, pcl::PointCloud<pcl::Normal>::Ptr normal);
-    void computeKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn,float minScale, int nrOctaves, int nrScalesPerOctaves, float minContrast,
-                          pcl::PointCloud<pcl::PointWithScale>::Ptr keyPoints);
-    void computePFH(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,
-                    pcl::PointCloud<pcl::Normal>::Ptr normals,
-                    pcl::PointCloud<pcl::PointWithScale>::Ptr keyPoints, float featureRadius,
-                    pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors);
-    void computeFeatureCorrespondences(pcl::PointCloud<pcl::PFHSignature125>::Ptr source_descriptors,
-                                       pcl::PointCloud<pcl::PFHSignature125>::Ptr target_descriptors,
-                                       std::vector<int> &correspondences_out, std::vector<float> &correspondence_scores_out);
-    void visualizeCorrespondences( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr points1,
-                                   const pcl::PointCloud<pcl::PointWithScale>::Ptr keypoints1,
-                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr points2,
-                                   const pcl::PointCloud<pcl::PointWithScale>::Ptr keypoints2,
-                                   const std::vector<int> &correspondences,
-                                   const std::vector<float> &correspondence_scores);
-                                   */
+    struct PointCloudFeatures{
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr points;
+        pcl::PointCloud<pcl::Normal>::Ptr normals;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints;
+        pcl::PointCloud<pcl::FPFHSignature33>::Ptr localDescriptors;
+    };
+
+    PointCloudFeatures computeFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points);
+
+    void findFeatureCorrespondences(pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors,
+                                    std::vector<int> &correspondencesOut, std::vector<float> &correspondenceScoresOut);
+
+    void visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points1, pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints1,
+                                  pcl::PointCloud<pcl::PointXYZRGB>::Ptr points2, pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints2,
+                                  std::vector<int> &correspondences, std::vector<float> &correspondenceScores, int maxToDisplay);
+
+
 
 
 Q_SIGNALS:
