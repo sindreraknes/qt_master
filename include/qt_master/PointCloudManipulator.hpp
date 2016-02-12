@@ -39,6 +39,7 @@
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection.h>
+#include <pcl/registration/correspondence_rejection_distance.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/features/shot.h>
 
@@ -93,6 +94,17 @@ public:
 
 
 
+    pcl::CorrespondencesPtr findCorrespondences(pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors);
+
+    pcl::CorrespondencesPtr rejectCorrespondencesDistance(pcl::CorrespondencesPtr correspondences, pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints,
+                                                          pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints, float maximumDistance);
+
+    pcl::CorrespondencesPtr rejectCorrespondencesSampleConsensus(pcl::CorrespondencesPtr correspondences, pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints,
+                                                                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints, float inlierTreshold, int maxIterations);
+
+    void visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
+                                  pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,
+                                  pcl::CorrespondencesPtr correspondences, pcl::CorrespondencesPtr goodCorrespondences);
 
 Q_SIGNALS:
     void sendNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);

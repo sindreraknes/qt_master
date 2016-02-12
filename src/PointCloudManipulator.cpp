@@ -447,6 +447,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
     // CONTRAST IS THE LAST PART
+    // TODO : TRY TO VOXELDOWNSAMPLE INSTEAD OF DETECTING KEYPOITNS
     features.keyPoints = detectKeyPoints(inCloud, features.normals, 0.01, 3, 3, 0);
     std::cout << "Found  keypoints: " ;
     std::cout << features.keyPoints->size() << std::endl;
@@ -532,6 +533,74 @@ void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointX
     vis.spin ();
 }
 
+pcl::CorrespondencesPtr PointCloudManipulator::findCorrespondences(pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors)
+{
+    pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
+    pcl::registration::CorrespondenceEstimation<pcl::FPFHSignature33, pcl::FPFHSignature33> est;
+    est.setInputSource(sourceDescriptors);
+    est.setInputTarget(targetDescriptors);
+    est.determineCorrespondences(*correspondences);
+    return correspondences;
+}
+
+pcl::CorrespondencesPtr PointCloudManipulator::rejectCorrespondencesDistance(pcl::CorrespondencesPtr correspondences, pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints,
+                                                                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints, float maximumDistance)
+{
+    pcl::CorrespondencesPtr goodCorrespondences (new pcl::Correspondences);
+    pcl::registration::CorrespondenceRejectorDistance rej;
+    rej.setInputSource<pcl::PointXYZRGB> (sourceKeyPoints);
+    rej.setInputTarget<pcl::PointXYZRGB> (targetKeyPoints);
+    rej.setMaximumDistance(maximumDistance); //meters
+    rej.setInputCorrespondences(correspondences);
+    rej.getCorrespondences(*goodCorrespondences);
+    return goodCorrespondences;
+}
+
+pcl::CorrespondencesPtr PointCloudManipulator::rejectCorrespondencesSampleConsensus(pcl::CorrespondencesPtr correspondences,
+                                                                                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints,
+                                                                                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,
+                                                                                    float inlierTreshold, int maxIterations)
+{
+    pcl::CorrespondencesPtr goodCorrespondences (new pcl::Correspondences);
+    pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZRGB> rej;
+    rej.setInputSource(sourceKeyPoints);
+    rej.setInputTarget(targetKeyPoints);
+    rej.setInlierThreshold(inlierTreshold);
+    rej.setMaximumIterations(maxIterations);
+    rej.setInputCorrespondences(correspondences);
+    rej.getCorrespondences(*goodCorrespondences);
+    return goodCorrespondences;
+
+}
+
+void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
+                                                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,
+                                                     pcl::CorrespondencesPtr correspondences, pcl::CorrespondencesPtr goodCorrespondences)
+{
+    const Eigen::Vector3f translate (0.4, 0.0, 0.0);
+    const Eigen::Quaternionf no_rotation (0, 0, 0, 0);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr left (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr leftKey (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::transformPointCloud (*sourcePoints, *left, -translate, no_rotation);
+    pcl::transformPointCloud (*sourceKeyPoints, *leftKey, -translate, no_rotation);
+
+    pcl::visualization::PCLVisualizer vis;
+    int c = 0;
+    int d = 1;
+    vis.createViewPort(0, 0, 0.5, 1, c);
+    vis.createViewPort(0.5, 0, 1, 1, d);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (left, 255, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (targetPoints, 0, 0, 255);
+    vis.addPointCloud(left, red, "cloud1",c);
+    vis.addPointCloud(targetPoints, blue, "cloud2",c);
+    vis.addCorrespondences<pcl::PointXYZRGB>(leftKey,targetKeyPoints,*correspondences,"Correspondences",c);
+    vis.addPointCloud(left, red, "cloud1b",d);
+    vis.addPointCloud(targetPoints, blue, "cloud2b", d);
+    vis.addCorrespondences<pcl::PointXYZRGB>(leftKey,targetKeyPoints,*goodCorrespondences, "Good correspondences",d);
+    vis.spin();
+
+}
+
 
 void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn1, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn2)
 {
@@ -552,51 +621,61 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
         points2->points[i].b = 255;
     }
 
-
-
     PointCloudFeatures features1 = computeFeatures(points1);
     PointCloudFeatures features2 = computeFeatures(points2);
-    Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
-    tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
-    std::cout << tform << std::endl;
+//    Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
+//    tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
+//    std::cout << tform << std::endl;
 
-    pcl::visualization::PCLVisualizer vis;
-    int a = 0;
-    int b = 1;
-    vis.createViewPort(0, 0, 0.5, 1, a);
-    vis.createViewPort(0.5, 0, 1, 1, b);
+//    pcl::visualization::PCLVisualizer vis;
+//    int a = 0;
+//    int b = 1;
+//    vis.createViewPort(0, 0, 0.5, 1, a);
+//    vis.createViewPort(0.5, 0, 1, 1, b);
 
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (features2.points, 255, 0, 0);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (features1.points, 0, 0, 255);
-    vis.addPointCloud(features2.points, red, "cloud1",a);
-    vis.addPointCloud(features1.points, blue, "cloud2",a);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (features2.points, 255, 0, 0);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (features1.points, 0, 0, 255);
+//    vis.addPointCloud(features2.points, red, "cloud1",a);
+//    vis.addPointCloud(features1.points, blue, "cloud2",a);
 
-    vis.addPointCloud(features2.points, red, "cloud1b",b);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp2 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::transformPointCloud(*features1.points, *tmp2, tform);
-    vis.addPointCloud(tmp2, blue, "cloud2b", b);
-    vis.spin();
-//    vis.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (features1.points, features1.normals, 4, 0.02, "normals");
-//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (features1.keyPoints, 255, 0, 0);
-//    vis.addPointCloud (features1.keyPoints, red, "keypoints");
-//    vis.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "keypoints");
+//    vis.addPointCloud(features2.points, red, "cloud1b",b);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::transformPointCloud(*features1.points, *tmp2, tform);
+//    vis.addPointCloud(tmp2, blue, "cloud2b", b);
+//    vis.spin();
 
 
-
-
+    // CORRESPONDENCE USING VECTOR AND WEIRD KDTREE METHOD
     std::vector<int> correspondences;
-    std::vector<int> correspondences2;
     std::vector<float> correspondenceScores;
-    std::vector<float> correspondenceScores2;
     findFeatureCorrespondences(features1.localDescriptors, features2.localDescriptors, correspondences, correspondenceScores);
-    findFeatureCorrespondences(features2.localDescriptors, features1.localDescriptors, correspondences2, correspondenceScores2);
-    visualizeCorrespondences(features1.points,features1.keyPoints,features2.points,features2.keyPoints,correspondences,correspondenceScores,features1.keyPoints->size());
+    //visualizeCorrespondences(features1.points,features1.keyPoints,features2.points,features2.keyPoints,correspondences,correspondenceScores,features1.keyPoints->size());
+    std::cout << "Vector<int> correspondences ALL: ";
+    std::cout << correspondences.size() << std::endl;
 
-// TODO
-    // http://robotica.unileon.es/mediawiki/index.php/PCL/OpenNI_tutorial_5:_3D_object_recognition_(pipeline)#Matching
-    // MATCHING
-    // filterCorrespondenses -- > source2target_  [std::vector<int>]   target2source_ [std::vector<int>]     correspondences_ [pcl::CorrespondencesPtr]
-    //  source_keypoints_ [pcl::PointCloud<pcl::PointXYZI>] target_keypoints_
+    // CORRESPONDENCE USING CORRESPONDENCEESTIMATION
+    pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
+    all_correspondences = findCorrespondences(features1.localDescriptors, features2.localDescriptors);
+    std::cout << "CorrespondenceEstimation correspondences ALL: ";
+    std::cout << all_correspondences->size() << std::endl;
+
+    // CORRESPONDENCE REJECTION USING DISTANCE
+    pcl::CorrespondencesPtr corrRejectDistance (new pcl::Correspondences);
+    corrRejectDistance = rejectCorrespondencesDistance(all_correspondences, features1.keyPoints, features2.keyPoints, 0.5);
+    std::cout << "Rejected using distance, new amount is : ";
+    std::cout << corrRejectDistance->size() << std::endl;
+    visualizeCorrespondences(features1.points, features2.points,features1.keyPoints,features2.keyPoints,all_correspondences,corrRejectDistance);
+
+    // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
+    pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,features1.keyPoints,features2.keyPoints,0.25,1000);
+    std::cout << "Rejected using sample consensus, new amount is : ";
+    std::cout << corrRejectSampleConsensus->size() << std::endl;
+    visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectSampleConsensus);
+
+
+
+
 }
 
 
