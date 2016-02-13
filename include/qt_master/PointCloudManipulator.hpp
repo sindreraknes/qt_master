@@ -41,6 +41,9 @@
 #include <pcl/registration/correspondence_rejection.h>
 #include <pcl/registration/correspondence_rejection_distance.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/correspondence_rejection_one_to_one.h>
+#include <pcl/registration/correspondence_rejection_organized_boundary.h>
+#include <pcl/registration/correspondence_rejection_median_distance.h>
 #include <pcl/features/shot.h>
 
 namespace qt_master {
@@ -101,6 +104,8 @@ public:
 
     pcl::CorrespondencesPtr rejectCorrespondencesSampleConsensus(pcl::CorrespondencesPtr correspondences, pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints,
                                                                  pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints, float inlierTreshold, int maxIterations);
+
+    pcl::CorrespondencesPtr rejectCorrespondencesOneToOne(pcl::CorrespondencesPtr correspondences);
 
     void visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
                                   pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,

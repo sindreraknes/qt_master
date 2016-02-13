@@ -573,6 +573,15 @@ pcl::CorrespondencesPtr PointCloudManipulator::rejectCorrespondencesSampleConsen
 
 }
 
+pcl::CorrespondencesPtr PointCloudManipulator::rejectCorrespondencesOneToOne(pcl::CorrespondencesPtr correspondences)
+{
+    pcl::CorrespondencesPtr goodCorrespondences (new pcl::Correspondences);
+    pcl::registration::CorrespondenceRejectorOneToOne rej;
+    rej.setInputCorrespondences(correspondences);
+    rej.getCorrespondences(*goodCorrespondences);
+    return goodCorrespondences;
+}
+
 void PointCloudManipulator::visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
                                                      pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,
                                                      pcl::CorrespondencesPtr correspondences, pcl::CorrespondencesPtr goodCorrespondences)
@@ -673,6 +682,17 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
     std::cout << corrRejectSampleConsensus->size() << std::endl;
     visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectSampleConsensus);
 
+    // CORRESPONDENCE REJECTION USING ONE TO ONE
+    pcl::CorrespondencesPtr corrRejectOneToOne (new pcl::Correspondences);
+    corrRejectOneToOne = rejectCorrespondencesOneToOne(all_correspondences);
+    std::cout << "Rejected using one to one, new amount is : ";
+    std::cout << corrRejectOneToOne->size() << std::endl;
+    visualizeCorrespondences(features1.points, features2.points,features1.keyPoints,features2.keyPoints, all_correspondences, corrRejectOneToOne);
+
+    // CORRESPONDENCE REJECTION USING ORGANIZED BOUNDARY
+    pcl::registration::CorrespondenceRejectionOrganizedBoundary rejOrg;
+    // CORRESPONDENCE REJECTION USING MEDIAN DISTANCE
+    pcl::registration::CorrespondenceRejectorMedianDistance rejMed;
 
 
 
