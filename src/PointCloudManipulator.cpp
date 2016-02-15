@@ -776,17 +776,17 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 //    std::cout << corrRejectMed->size() << std::endl;
 //    visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectMed);
 
-    Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
-    transSVD = estimateTransformationSVD(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
-    std::cout << transSVD << std::endl;
-    visualizeTransformation(features2.points, features1.points, transSVD);
+//    Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
+//    transSVD = estimateTransformationSVD(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
+//    std::cout << transSVD << std::endl;
+//    visualizeTransformation(features2.points, features1.points, transSVD);
 
-    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity();
-    transLM = estimateTransformationLM(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
-    std::cout << transLM << std::endl;
-    visualizeTransformation(features2.points, features1.points, transLM);
+//    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity();
+//    transLM = estimateTransformationLM(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
+//    std::cout << transLM << std::endl;
+//    visualizeTransformation(features2.points, features1.points, transLM);
 
-//    pcl::registration::TransformationEstimationPointToPlaneWeighted<pcl::PointXYZRGB, pcl::PointXYZRGB, double> rofl;
+//    pcl::registration::TransformationEstimationPointToPlaneWeighted<pcl::PointXYZRGB, pcl::PointXYZRGB, double> transEst;
 //    Eigen::Matrix4f transPTP = Eigen::Matrix4f::Identity();
 
 //    std::vector<double> correspondence_weights (corrRejectSampleConsensus->size ());
@@ -800,10 +800,10 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 //      correspondence_weights[i] = (*corrRejectSampleConsensus)[i].weight;
 //    }
 
-//    rofl.setWeights(correspondence_weights);
-//    rofl.estimateRigidTransformation(*features1.keyPoints, *features2.keyPoints, *corrRejectSampleConsensus, transPTP);
-//    std::cout << transPTP << std::endl;
-//    visualizeTransformation(features2.points, features1.points ,transPTP);
+//    transEst.setWeights(correspondence_weights);
+//    transEst.estimateRigidTransformation(*features1.keyPoints, *features2.keyPoints, *corrRejectSampleConsensus, transPTP);
+    //std::cout << transPTP << std::endl;
+    //visualizeTransformation(features2.points, features1.points ,transPTP);
 
 }
 
