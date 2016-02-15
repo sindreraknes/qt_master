@@ -18,7 +18,7 @@ QStringList PointCloudManipulator::getFilters()
     filterList.append("Median");
     filterList.append("Normals");
     filterList.append("Translate");
-    filterList.append("Filter3");
+    filterList.append("Bilateral");
 
     return filterList;
 
@@ -69,6 +69,13 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
         // TRANSLATION MATRIX
         //
         //translateCloud(inCloud, d1, d2, d3);
+    case 5:
+        filterBilateral(inCloud, d1, d2);
+        lastFiltered = "Bilateral filter, ";
+        lastFiltered.append(" SigmaS: ");
+        lastFiltered.append(QString::number(d1));
+        lastFiltered.append(" SigmaR: ");
+        lastFiltered.append(QString::number(d2));
     default:
         ;
         // SOMETHING WENT WRONG
@@ -158,6 +165,19 @@ void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
 
         Q_EMIT sendNewIndexInfo(labels, show, stepsAndRange);
         break;
+    case 5:
+        labels.replace(0, "Sigma S");
+        labels.replace(1, "Sigma R");
+        show.replace(0, true);
+        show.replace(1,true);
+        stepsAndRange.replace(0, 1);
+        stepsAndRange.replace(1, 0.001);
+        stepsAndRange.replace(3, 0);
+        stepsAndRange.replace(4, 10);
+        stepsAndRange.replace(5, 0);
+        stepsAndRange.replace(6, 0.1);
+
+        Q_EMIT sendNewIndexInfo(labels, show, stepsAndRange);
     default:
         ;
         // SOMETHING WENT WRONG
@@ -208,6 +228,16 @@ void PointCloudManipulator::filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inC
     visualizer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal> (inCloud, normals_out, tmpDisplay, 0.05, "normals");
     visualizer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0,0.0,1.0, "normals");
     Q_EMIT sendNewVisualizer(visualizer);
+}
+
+void PointCloudManipulator::filterBilateral(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double sigmaS, float sigmaR)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    bilateralFilter.setInputCloud(inCloud);
+    bilateralFilter.setSigmaS(sigmaS);
+    bilateralFilter.setSigmaR(sigmaR);
+    bilateralFilter.filter(*filteredCloud);
+    Q_EMIT sendNewPointCloud(filteredCloud, "filteredCloud");
 }
 
 void PointCloudManipulator::translateCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr  inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ)
@@ -451,7 +481,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     features.keyPoints = detectKeyPoints(inCloud, features.normals, 0.01, 3, 3, 0.0);
     std::cout << "Found  keypoints: " ;
     std::cout << features.keyPoints->size() << std::endl;
-    features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.1);
+    features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.15);
     std::cout << "Found descriptors: " ;
     std::cout << features.localDescriptors->size() << std::endl;
     return features;
@@ -679,26 +709,26 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
     PointCloudFeatures features1 = computeFeatures(points1);
     PointCloudFeatures features2 = computeFeatures(points2);
-    Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
-    tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
-    std::cout << tform << std::endl;
+//    Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
+//    tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
+//    std::cout << tform << std::endl;
 
-    pcl::visualization::PCLVisualizer vis;
-    int a = 0;
-    int b = 1;
-    vis.createViewPort(0, 0, 0.5, 1, a);
-    vis.createViewPort(0.5, 0, 1, 1, b);
+//    pcl::visualization::PCLVisualizer vis;
+//    int a = 0;
+//    int b = 1;
+//    vis.createViewPort(0, 0, 0.5, 1, a);
+//    vis.createViewPort(0.5, 0, 1, 1, b);
 
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (features2.points, 255, 0, 0);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (features1.points, 0, 0, 255);
-    vis.addPointCloud(features2.points, red, "cloud1",a);
-    vis.addPointCloud(features1.points, blue, "cloud2",a);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (features2.points, 255, 0, 0);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (features1.points, 0, 0, 255);
+//    vis.addPointCloud(features2.points, red, "cloud1",a);
+//    vis.addPointCloud(features1.points, blue, "cloud2",a);
 
-    vis.addPointCloud(features2.points, red, "cloud1b",b);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp2 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::transformPointCloud(*features1.points, *tmp2, tform);
-    vis.addPointCloud(tmp2, blue, "cloud2b", b);
-    vis.spin();
+//    vis.addPointCloud(features2.points, red, "cloud1b",b);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::transformPointCloud(*features1.points, *tmp2, tform);
+//    vis.addPointCloud(tmp2, blue, "cloud2b", b);
+//    vis.spin();
 
 
     // CORRESPONDENCE USING VECTOR AND WEIRD KDTREE METHOD
@@ -724,7 +754,7 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
     // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
     pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
-    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,features1.keyPoints,features2.keyPoints,0.25,1000);
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,features1.keyPoints,features2.keyPoints,0.25,100000);
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
     visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectSampleConsensus);
@@ -771,9 +801,9 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 //    }
 
 //    rofl.setWeights(correspondence_weights);
-//    //rofl.estimateRigidTransformation(*features1.points, *features2.points, *corrRejectSampleConsensus,transPTP);
+//    rofl.estimateRigidTransformation(*features1.keyPoints, *features2.keyPoints, *corrRejectSampleConsensus, transPTP);
 //    std::cout << transPTP << std::endl;
-//    //visualizeTransformation(features1.points, features2.points ,transPTP);
+//    visualizeTransformation(features2.points, features1.points ,transPTP);
 
 }
 

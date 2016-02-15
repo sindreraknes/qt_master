@@ -9,6 +9,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/median_filter.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/fast_bilateral.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/common/transforms.h>
@@ -65,6 +66,7 @@ public:
     void filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double leafSize);
     void filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double windowSize, double maxMovement);
     void filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double radius, double nrToDisplay);
+    void filterBilateral(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double sigmaS, float sigmaR);
     void translateCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ);
     void getNewVisualizer(int selectedFilter);
     QString getLastFiltered();
@@ -138,6 +140,7 @@ private:
     pcl::VoxelGrid<pcl::PointXYZ> voxelGridFilter;
     pcl::MedianFilter<pcl::PointXYZ> medianFilter;
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> statOutlierFilter;
+    pcl::FastBilateralFilter<pcl::PointXYZ> bilateralFilter;
     boost::shared_ptr<pcl::visualization::PCLVisualizer> visualizer;
     QString lastFiltered;
 
