@@ -33,7 +33,6 @@
 #include "pcl/features/fpfh.h"
 #include "pcl/keypoints/sift_keypoint.h"
 #include <pcl/registration/transforms.h>
-#include <pcl/visualization/pcl_visualizer.h>
 
 // DUNNO
 #include <pcl/registration/ia_ransac.h>
@@ -45,6 +44,11 @@
 #include <pcl/registration/correspondence_rejection_organized_boundary.h>
 #include <pcl/registration/correspondence_rejection_median_distance.h>
 #include <pcl/features/shot.h>
+#include <pcl/registration/transformation_estimation_svd.h>
+#include <pcl/registration/transformation_estimation_lm.h>
+#include <pcl/registration/transformation_estimation_point_to_plane_lls.h>
+#include <pcl/registration/transformation_estimation_point_to_plane_weighted.h>
+#include <pcl/registration/transformation_estimation_point_to_plane.h>
 
 namespace qt_master {
 
@@ -107,9 +111,19 @@ public:
 
     pcl::CorrespondencesPtr rejectCorrespondencesOneToOne(pcl::CorrespondencesPtr correspondences);
 
+    pcl::CorrespondencesPtr rejectCorrespondencesMedianDistance(pcl::CorrespondencesPtr correspondences, double meanDistance);
+
     void visualizeCorrespondences(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
                                   pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourceKeyPoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetKeyPoints,
                                   pcl::CorrespondencesPtr correspondences, pcl::CorrespondencesPtr goodCorrespondences);
+
+    Eigen::Matrix4f estimateTransformationSVD(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
+                                              pcl::CorrespondencesPtr correspondences);
+    Eigen::Matrix4f estimateTransformationLM(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
+                                             pcl::CorrespondencesPtr correspondences);
+
+    void visualizeTransformation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
+                                 Eigen::Matrix4f transform);
 
 Q_SIGNALS:
     void sendNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);
