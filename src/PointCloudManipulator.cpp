@@ -420,6 +420,20 @@ pcl::PointCloud<pcl::Normal>::Ptr PointCloudManipulator::computeSurfaceNormals(p
     return (normals);
 }
 
+pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudManipulator::computeSurfacePointNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input,
+                                                                                         pcl::PointCloud<pcl::PointXYZRGB>::Ptr surface, float radius)
+{
+    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::PointNormal> normal_estimation;
+    pcl::PointCloud<pcl::PointNormal>::Ptr normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    normal_estimation.setSearchSurface(surface);
+    normal_estimation.setSearchMethod (tree);
+    normal_estimation.setRadiusSearch (radius);
+    normal_estimation.setInputCloud (input);
+    normal_estimation.compute (*normals);
+    return (normals);
+}
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals, float minScale,
                                                             int nrOctaves, int nrScalesPerOctave, float minContrast)
 {
@@ -476,11 +490,17 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     features.normals = computeSurfaceNormals(inCloud, 0.05);
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
+    features.pointNormals = computeSurfacePointNormals(inCloud,inCloud, 0.05);
+    std::cout << "Found point normals: " ;
+    std::cout << features.pointNormals->size() << std::endl;
     // CONTRAST IS THE LAST PART
     // TODO : TRY TO VOXELDOWNSAMPLE INSTEAD OF DETECTING KEYPOITNS
     features.keyPoints = detectKeyPoints(inCloud, features.normals, 0.01, 3, 3, 0.0);
     std::cout << "Found  keypoints: " ;
     std::cout << features.keyPoints->size() << std::endl;
+    features.keyPointNormals = computeSurfacePointNormals(features.keyPoints, features.points, 0.05);
+    std::cout << "Found  keypoint normals: " ;
+    std::cout << features.keyPointNormals->size() << std::endl;
     features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.15);
     std::cout << "Found descriptors: " ;
     std::cout << features.localDescriptors->size() << std::endl;
@@ -776,36 +796,82 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 //    std::cout << corrRejectMed->size() << std::endl;
 //    visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectMed);
 
-//    Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
-//    transSVD = estimateTransformationSVD(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
-//    std::cout << transSVD << std::endl;
-//    visualizeTransformation(features2.points, features1.points, transSVD);
+    Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
+    transSVD = estimateTransformationSVD(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
+    std::cout << transSVD << std::endl;
+    visualizeTransformation(features2.points, features1.points, transSVD);
 
-//    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity();
-//    transLM = estimateTransformationLM(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
-//    std::cout << transLM << std::endl;
-//    visualizeTransformation(features2.points, features1.points, transLM);
+    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity();
+    transLM = estimateTransformationLM(features1.keyPoints, features2.keyPoints, corrRejectSampleConsensus);
+    std::cout << transLM << std::endl;
+    visualizeTransformation(features2.points, features1.points, transLM);
 
-//    pcl::registration::TransformationEstimationPointToPlaneWeighted<pcl::PointXYZRGB, pcl::PointXYZRGB, double> transEst;
-//    Eigen::Matrix4f transPTP = Eigen::Matrix4f::Identity();
+    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+    icp.setMaxCorrespondenceDistance(0.001);
+    icp.setMaximumIterations(100);
+    icp.setTransformationEpsilon(1e-8);
+    icp.setEuclideanFitnessEpsilon(0.0001);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp1 (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::transformPointCloud(*features1.points,*tmp1,transSVD);
+    icp.setInputSource(tmp1);
+    icp.setInputTarget(features2.points);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+
+
+    pcl::visualization::PCLVisualizer vis;
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (tmp1, 255, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (outCloud, 0, 0, 255);
+    vis.addPointCloud(tmp1, red, "tmp1");
+    vis.addPointCloud(outCloud, blue, "bluu");
+    icp.align(*outCloud);
+
+    while(!icp.hasConverged()){
+
+        std::cout << "DIDIDITI" << std::endl;
+        vis.updatePointCloud(tmp1, red, "tmp1");
+        vis.updatePointCloud(outCloud, blue, "bluu");
+        vis.spinOnce();
+
+
+    }
+    vis.updatePointCloud(tmp1, red, "tmp1");
+    vis.updatePointCloud(outCloud, blue, "bluu");
+    vis.spin();
+
+
+
+
+}
+
+//    pcl::registration::TransformationEstimationPointToPlaneWeighted<pcl::PointNormal, pcl::PointNormal, double> transEst;
+//    Eigen::Matrix4d transPTP = Eigen::Matrix4d::Identity();
+//    transPTP(0,0) = 10;
+//    std::cout << transPTP << std::endl;
 
 //    std::vector<double> correspondence_weights (corrRejectSampleConsensus->size ());
 //    float sigma_z_min_ = 0.0012f;
 //    for (size_t i = 0; i < corrRejectSampleConsensus->size (); ++i)
 //    {
-//      float depth = features2.points->points[(*corrRejectSampleConsensus)[i].index_match].z;
+//      float depth = features1.keyPoints->points[(*corrRejectSampleConsensus)[i].index_match].z;
 //      /// TODO add the angle, does not influence the results too much
 //      float sigma_z = 0.0012f + 0.0019f * (depth - 0.4f) * (depth - 0.4f);
 //      (*corrRejectSampleConsensus)[i].weight = sigma_z_min_ / sigma_z;
 //      correspondence_weights[i] = (*corrRejectSampleConsensus)[i].weight;
 //    }
 
+//    Eigen::Matrix4f transPTPROFL = Eigen::Matrix4f::Identity();
 //    transEst.setWeights(correspondence_weights);
-//    transEst.estimateRigidTransformation(*features1.keyPoints, *features2.keyPoints, *corrRejectSampleConsensus, transPTP);
-    //std::cout << transPTP << std::endl;
-    //visualizeTransformation(features2.points, features1.points ,transPTP);
+//    transEst.estimateRigidTransformation(*features1.pointNormals, *features2.pointNormals, *corrRejectSampleConsensus, transPTP);
 
-}
+//    std::cout << transPTP << std::endl;
+//    for(int i = 0; i<4; i++){
+//        for(int k = 0; k<4; k++){
+//            float tmp = (float)transPTP(i,k);
+//            transPTPROFL(i,k) = tmp;
+//        }
+//    }
+//    std::cout << transPTPROFL << std::endl;
+//    visualizeTransformation(features2.points, features1.points ,transPTPROFL);
 
 
 double PointCloudManipulator::computeCloudResolution(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)

@@ -8,6 +8,13 @@ project(qt_master)
 ##############################################################################
 # Catkin
 ##############################################################################
+find_package(PCL 1.7 REQUIRED common registration visualization)
+
+include_directories(${PCL_INCLUDE_DIRS} include)
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+link_libraries(${PCL_LIBRARIES})
+
 
 # qt_build provides the qt cmake glue, roscpp the comms for a default talker
 find_package(catkin REQUIRED COMPONENTS qt_build roscpp pcl_conversions pcl_ros)

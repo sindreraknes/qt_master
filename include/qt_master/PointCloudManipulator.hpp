@@ -50,6 +50,7 @@
 #include <pcl/registration/transformation_estimation_point_to_plane_lls.h>
 #include <pcl/registration/transformation_estimation_point_to_plane_weighted.h>
 #include <pcl/registration/transformation_estimation_point_to_plane.h>
+#include <pcl/registration/icp.h>
 
 namespace qt_master {
 
@@ -77,6 +78,7 @@ public:
     // This is connected
     void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
     pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
+    pcl::PointCloud<pcl::PointNormal>::Ptr computeSurfacePointNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input,pcl::PointCloud<pcl::PointXYZRGB>::Ptr surface, float radius);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals, float minScale,
                                                            int nrOctaves, int nrScalesPerOctave, float minContrast);
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
@@ -88,7 +90,9 @@ public:
     struct PointCloudFeatures{
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr points;
         pcl::PointCloud<pcl::Normal>::Ptr normals;
+        pcl::PointCloud<pcl::PointNormal>::Ptr pointNormals;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints;
+        pcl::PointCloud<pcl::PointNormal>::Ptr keyPointNormals;
         pcl::PointCloud<pcl::FPFHSignature33>::Ptr localDescriptors;
     };
 
