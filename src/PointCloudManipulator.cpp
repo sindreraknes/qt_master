@@ -449,6 +449,28 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::detectKeyPoints(pc
     return keyPoints;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterVoxel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double leafSize)
+{
+    float leaf = leafSize;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    voxelGridFilterRGB.setInputCloud(inCloud);
+    voxelGridFilterRGB.setLeafSize(leaf, leaf, leaf);
+    voxelGridFilterRGB.filter(*filteredCloud);
+    return filteredCloud;
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterShadowPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,
+                                                              pcl::PointCloud<pcl::Normal>::Ptr normals, double threshold)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    shadowPointsFilter.setInputCloud(inCloud);
+    shadowPointsFilter.setKeepOrganized(true);
+    shadowPointsFilter.setNormals(normals);
+    shadowPointsFilter.setThreshold(threshold);
+    shadowPointsFilter.filter(*filteredCloud);
+    return filteredCloud;
+}
+
 pcl::PointCloud<pcl::FPFHSignature33>::Ptr PointCloudManipulator::computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
                                                                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius)
 {
@@ -487,20 +509,26 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
 {
     PointCloudFeatures features;
     features.points = inCloud;
+
     features.normals = computeSurfaceNormals(inCloud, 0.05);
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
-    features.pointNormals = computeSurfacePointNormals(inCloud,inCloud, 0.05);
-    std::cout << "Found point normals: " ;
-    std::cout << features.pointNormals->size() << std::endl;
+
+    features.points = filterShadowPoint(features.points, features.normals, 0.1);
+
+//    features.pointNormals = computeSurfacePointNormals(inCloud,inCloud, 0.05);
+//    std::cout << "Found point normals: " ;
+//    std::cout << features.pointNormals->size() << std::endl;
+
     // CONTRAST IS THE LAST PART
-    // TODO : TRY TO VOXELDOWNSAMPLE INSTEAD OF DETECTING KEYPOITNS
     features.keyPoints = detectKeyPoints(inCloud, features.normals, 0.01, 3, 3, 0.0);
     std::cout << "Found  keypoints: " ;
     std::cout << features.keyPoints->size() << std::endl;
-    features.keyPointNormals = computeSurfacePointNormals(features.keyPoints, features.points, 0.05);
-    std::cout << "Found  keypoint normals: " ;
-    std::cout << features.keyPointNormals->size() << std::endl;
+
+//    features.keyPointNormals = computeSurfacePointNormals(features.keyPoints, features.points, 0.05);
+//    std::cout << "Found  keypoint normals: " ;
+//    std::cout << features.keyPointNormals->size() << std::endl;
+
     features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.15);
     std::cout << "Found descriptors: " ;
     std::cout << features.localDescriptors->size() << std::endl;
@@ -840,6 +868,54 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
 
 
+
+}
+
+void PointCloudManipulator::alignClouds(QStringList fileNames)
+{
+    std::vector<PointCloudFeatures> pointClouds;
+    for(int i = 0; i<fileNames.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+        tmpCloud = filterVoxel(tmpCloud, 0.02);
+        for (int i = 0; i< tmpCloud->points.size(); i++){
+            tmpCloud->points[i].r = 255;
+            tmpCloud->points[i].g = 255;
+            tmpCloud->points[i].b = 255;
+        }
+        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud);
+        pointClouds.push_back(tmpFeature);
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
+
+    Eigen::Matrix4f prevTrans = Eigen::Matrix4f::Identity();
+    *tmpAligned = *pointClouds.at(0).points;
+    for(int k = 0; k<pointClouds.size()-1; k++){
+        pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
+        all_correspondences = findCorrespondences(pointClouds.at(k).localDescriptors, pointClouds.at(k+1).localDescriptors);
+        std::cout << "CorrespondenceEstimation correspondences ALL: ";
+        std::cout << all_correspondences->size() << std::endl;
+
+        pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
+        corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,pointClouds.at(k).keyPoints,pointClouds.at(k+1).keyPoints,0.25,1000);
+        std::cout << "Rejected using sample consensus, new amount is : ";
+        std::cout << corrRejectSampleConsensus->size() << std::endl;
+
+        Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
+        transSVD = estimateTransformationSVD(pointClouds.at(k).keyPoints, pointClouds.at(k+1).keyPoints, corrRejectSampleConsensus);
+        std::cout << transSVD << std::endl;
+        //visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(k).points, transSVD);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        Eigen::Matrix4f trans = prevTrans*transSVD.inverse();
+        pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,trans);
+        *tmpAligned = *tmpAligned + *tmp;
+        prevTrans = trans;
+
+    }
+    pcl::visualization::PCLVisualizer vis;
+    vis.addPointCloud(tmpAligned, "aligned shit");
+    vis.spin();
 
 }
 

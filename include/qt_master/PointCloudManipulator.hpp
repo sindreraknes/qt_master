@@ -10,6 +10,7 @@
 #include <pcl/filters/median_filter.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/fast_bilateral.h>
+#include <pcl/filters/shadowpoints.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/common/transforms.h>
@@ -77,10 +78,14 @@ public:
     void keyPointsNARF(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
     // This is connected
     void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
+    void alignClouds(QStringList fileNames);
     pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
     pcl::PointCloud<pcl::PointNormal>::Ptr computeSurfacePointNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input,pcl::PointCloud<pcl::PointXYZRGB>::Ptr surface, float radius);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals, float minScale,
                                                            int nrOctaves, int nrScalesPerOctave, float minContrast);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterVoxel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double leafSize);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterShadowPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,
+                                                             pcl::PointCloud<pcl::Normal>::Ptr normals, double threshold);
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
                                                                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius);
     Eigen::Matrix4f computeInitialAlignment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors,
@@ -142,6 +147,8 @@ private:
     QStringList filterList;
     pcl::PassThrough<pcl::PointXYZ> passThroughFilter;
     pcl::VoxelGrid<pcl::PointXYZ> voxelGridFilter;
+    pcl::VoxelGrid<pcl::PointXYZRGB> voxelGridFilterRGB;
+    pcl::ShadowPoints<pcl::PointXYZRGB, pcl::Normal> shadowPointsFilter;
     pcl::MedianFilter<pcl::PointXYZ> medianFilter;
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> statOutlierFilter;
     pcl::FastBilateralFilter<pcl::PointXYZ> bilateralFilter;

@@ -158,13 +158,13 @@ void MainWindow::on_button_transform_clicked(bool check)
 void MainWindow::on_button_tester_clicked(bool check)
 {
     QStringList fileNames;
-    fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *cloud1);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
+    fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/minions/Downloads/",tr("PointClouds (*.pcd *.PCD)"));
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *cloud1);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
 
-    manipulator->tester2(cloud1, cloud2);
+    manipulator->alignClouds(fileNames);
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)
