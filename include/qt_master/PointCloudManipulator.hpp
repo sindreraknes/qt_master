@@ -86,6 +86,7 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterVoxel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double leafSize);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterShadowPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,
                                                              pcl::PointCloud<pcl::Normal>::Ptr normals, double threshold);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double limitMin, double limitMax, QString field);
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
                                                                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius);
     Eigen::Matrix4f computeInitialAlignment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors,
@@ -146,6 +147,7 @@ public Q_SLOTS:
 private:
     QStringList filterList;
     pcl::PassThrough<pcl::PointXYZ> passThroughFilter;
+    pcl::PassThrough<pcl::PointXYZRGB> passThroughFilterRGB;
     pcl::VoxelGrid<pcl::PointXYZ> voxelGridFilter;
     pcl::VoxelGrid<pcl::PointXYZRGB> voxelGridFilterRGB;
     pcl::ShadowPoints<pcl::PointXYZRGB, pcl::Normal> shadowPointsFilter;

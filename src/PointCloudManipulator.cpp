@@ -471,6 +471,17 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterShadowPoint(
     return filteredCloud;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double limitMin, double limitMax, QString field)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    passThroughFilterRGB.setInputCloud(inCloud);
+    passThroughFilterRGB.setFilterLimits(limitMin, limitMax);
+    passThroughFilterRGB.setFilterFieldName(field.toStdString());
+    passThroughFilterRGB.setKeepOrganized(true);
+    passThroughFilterRGB.filter(*filteredCloud);
+    return filteredCloud;
+}
+
 pcl::PointCloud<pcl::FPFHSignature33>::Ptr PointCloudManipulator::computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
                                                                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius)
 {
@@ -514,7 +525,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
 
-    features.points = filterShadowPoint(features.points, features.normals, 0.1);
+    //features.points = filterShadowPoint(features.points, features.normals, 0.1);
 
 //    features.pointNormals = computeSurfacePointNormals(inCloud,inCloud, 0.05);
 //    std::cout << "Found point normals: " ;
@@ -802,7 +813,7 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
     // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
     pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
-    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,features1.keyPoints,features2.keyPoints,0.25,100000);
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,features1.keyPoints,features2.keyPoints,0.25,1000);
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
     visualizeCorrespondences(features1.points, features2.points, features1.keyPoints, features2.keyPoints, all_correspondences, corrRejectSampleConsensus);
@@ -874,23 +885,28 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 void PointCloudManipulator::alignClouds(QStringList fileNames)
 {
     std::vector<PointCloudFeatures> pointClouds;
+    int k = 10;
     for(int i = 0; i<fileNames.size(); i++){
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
         pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+        tmpCloud = filterPassThrough(tmpCloud, 0.0, 6.5, "z");
+        tmpCloud = filterPassThrough(tmpCloud, -1.0, 2.2, "y");
         tmpCloud = filterVoxel(tmpCloud, 0.02);
         for (int i = 0; i< tmpCloud->points.size(); i++){
-            tmpCloud->points[i].r = 255;
-            tmpCloud->points[i].g = 255;
-            tmpCloud->points[i].b = 255;
+            tmpCloud->points[i].r = (i+1)*30;
+            tmpCloud->points[i].g = (i+1)*30;
+            tmpCloud->points[i].b = (i+1)*30;
         }
         PointCloudFeatures tmpFeature = computeFeatures(tmpCloud);
         pointClouds.push_back(tmpFeature);
     }
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr icpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
 
     Eigen::Matrix4f prevTrans = Eigen::Matrix4f::Identity();
     *tmpAligned = *pointClouds.at(0).points;
+    *icpCloud = *pointClouds.at(0).points;
     for(int k = 0; k<pointClouds.size()-1; k++){
         pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
         all_correspondences = findCorrespondences(pointClouds.at(k).localDescriptors, pointClouds.at(k+1).localDescriptors);
@@ -909,6 +925,27 @@ void PointCloudManipulator::alignClouds(QStringList fileNames)
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
         Eigen::Matrix4f trans = prevTrans*transSVD.inverse();
         pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,trans);
+
+
+        pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+        icp.setMaxCorrespondenceDistance(0.01);
+        icp.setMaximumIterations(1000);
+        icp.setTransformationEpsilon(1e-8);
+        icp.setEuclideanFitnessEpsilon(0.0001);
+        icp.setInputSource(tmp);
+        icp.setInputTarget(pointClouds.at(k).points);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        icp.align(*outCloud);
+        int it = 0;
+        while(it < 1000){
+            if(icp.hasConverged()){
+                *icpCloud = *icpCloud + *outCloud;
+                std::cout << "Converged! ";
+                it = 1000;
+            }
+            it ++;
+        }
+
         *tmpAligned = *tmpAligned + *tmp;
         prevTrans = trans;
 
@@ -916,6 +953,10 @@ void PointCloudManipulator::alignClouds(QStringList fileNames)
     pcl::visualization::PCLVisualizer vis;
     vis.addPointCloud(tmpAligned, "aligned shit");
     vis.spin();
+
+    pcl::visualization::PCLVisualizer vis2;
+    vis2.addPointCloud(icpCloud, "icp shiiit shit");
+    vis2.spin();
 
 }
 
