@@ -892,11 +892,11 @@ void PointCloudManipulator::alignClouds(QStringList fileNames)
         tmpCloud = filterPassThrough(tmpCloud, 0.0, 6.5, "z");
         tmpCloud = filterPassThrough(tmpCloud, -1.0, 2.2, "y");
         tmpCloud = filterVoxel(tmpCloud, 0.02);
-        for (int i = 0; i< tmpCloud->points.size(); i++){
-            tmpCloud->points[i].r = (i+1)*30;
-            tmpCloud->points[i].g = (i+1)*30;
-            tmpCloud->points[i].b = (i+1)*30;
-        }
+//        for (int i = 0; i< tmpCloud->points.size(); i++){
+//            tmpCloud->points[i].r = (i+1)*30;
+//            tmpCloud->points[i].g = (i+1)*30;
+//            tmpCloud->points[i].b = (i+1)*30;
+//        }
         PointCloudFeatures tmpFeature = computeFeatures(tmpCloud);
         pointClouds.push_back(tmpFeature);
     }

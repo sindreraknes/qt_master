@@ -125,19 +125,28 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
 {
     QStringList fileNames;
     fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
-
-    for (int i = 0; i<fileNames.size(); i++){
-        pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
-        if(i == 0){
-            displayCloud = tmpCloud;
-        }
-        else{
-            std::cout << i << std::endl;
-            *displayCloud += *tmpCloud;
-        }
+    if(ui.check_RGB->isChecked()){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *tmpCloud);
+        pcl::visualization::PCLVisualizer vis;
+        vis.addPointCloud(tmpCloud, "tmp");
+        vis.spin();
     }
-    displayPointCloudLeft(displayCloud, "displayCloud");
+    else{
+        for (int i = 0; i<fileNames.size(); i++){
+            pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+            if(i == 0){
+                displayCloud = tmpCloud;
+            }
+            else{
+                std::cout << i << std::endl;
+                *displayCloud += *tmpCloud;
+            }
+        }
+        displayPointCloudLeft(displayCloud, "displayCloud");
+    }
+
 
 }
 
