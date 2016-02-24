@@ -31,14 +31,18 @@
 #include "pcl/io/pcd_io.h"
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/features/normal_3d.h"
+#include "pcl/features/normal_3d_omp.h"
 #include "pcl/features/pfh.h"
 #include "pcl/features/fpfh.h"
+#include "pcl/features/fpfh_omp.h"
 #include "pcl/keypoints/sift_keypoint.h"
+#include "pcl/keypoints/iss_3d.h"
 #include <pcl/registration/transforms.h>
 
 // DUNNO
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_estimation_normal_shooting.h>
 #include <pcl/registration/correspondence_rejection.h>
 #include <pcl/registration/correspondence_rejection_distance.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
@@ -52,6 +56,12 @@
 #include <pcl/registration/transformation_estimation_point_to_plane_weighted.h>
 #include <pcl/registration/transformation_estimation_point_to_plane.h>
 #include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <pcl/registration/lum.h>
+#include <pcl/registration/elch.h>
+
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 namespace qt_master {
 
@@ -75,13 +85,14 @@ public:
 
     // TESTING NEW SHIT
     void keyPointsISS(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
-    void keyPointsNARF(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+    void keyPointsNARF(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud);
     // This is connected
     void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
     void alignClouds(QStringList fileNames);
+    void alignRobotCell(QStringList fileNames);
     pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
     pcl::PointCloud<pcl::PointNormal>::Ptr computeSurfacePointNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input,pcl::PointCloud<pcl::PointXYZRGB>::Ptr surface, float radius);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals, float minScale,
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, float minScale,
                                                            int nrOctaves, int nrScalesPerOctave, float minContrast);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterVoxel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double leafSize);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterShadowPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,
@@ -93,12 +104,13 @@ public:
                                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors,
                                             float minSampleDistance, float maxCorrespondenceDistance, int nrIterations);
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr extractPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius);
+
     struct PointCloudFeatures{
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr points;
         pcl::PointCloud<pcl::Normal>::Ptr normals;
-        pcl::PointCloud<pcl::PointNormal>::Ptr pointNormals;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints;
-        pcl::PointCloud<pcl::PointNormal>::Ptr keyPointNormals;
         pcl::PointCloud<pcl::FPFHSignature33>::Ptr localDescriptors;
     };
 

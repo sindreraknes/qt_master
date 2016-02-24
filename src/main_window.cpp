@@ -174,7 +174,9 @@ void MainWindow::on_button_tester_clicked(bool check)
     pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
     //manipulator->tester2(cloud1, cloud2);
 
-    manipulator->alignClouds(fileNames);
+    //manipulator->alignClouds(fileNames);
+
+    manipulator->alignRobotCell(fileNames);
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)
