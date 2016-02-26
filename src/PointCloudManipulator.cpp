@@ -270,143 +270,6 @@ QString PointCloudManipulator::getLastFiltered()
     return lastFiltered;
 }
 
-void PointCloudManipulator::keyPointsISS(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
-{
-    pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZ>);
-
-    // ISS keypoint detector object.
-    pcl::ISSKeypoint3D<pcl::PointXYZ, pcl::PointXYZ> detector;
-    detector.setInputCloud(cloud);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
-    detector.setSearchMethod(kdtree);
-    double resolution = computeCloudResolution(cloud);
-    // Set the radius of the spherical neighborhood used to compute the scatter matrix.
-    detector.setSalientRadius(6 * resolution);
-    // Set the radius for the application of the non maxima supression algorithm.
-    detector.setNonMaxRadius(4 * resolution);
-    // Set the minimum number of neighbors that has to be found while applying the non maxima suppression algorithm.
-    detector.setMinNeighbors(5);
-    // Set the upper bound on the ratio between the second and the first eigenvalue.
-    detector.setThreshold21(0.975);
-    // Set the upper bound on the ratio between the third and the second eigenvalue.
-    detector.setThreshold32(0.975);
-    // Set the number of prpcessing threads to use. 0 sets it to automatic.
-    detector.setNumberOfThreads(4);
-    detector.compute(*keypoints);
-
-    visualizer.reset(new pcl::visualization::PCLVisualizer ("viewer2", false));
-    visualizer->addPointCloud<pcl::PointXYZ> (cloud, "filteredCloud");
-    visualizer->addPointCloud<pcl::PointXYZ> (keypoints, "keyPoints");
-    visualizer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "keyPoints");
-    visualizer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0,0.0,1.0, "keyPoints");
-
-    Q_EMIT sendNewVisualizer(visualizer);
-}
-
-void PointCloudManipulator::keyPointsNARF(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
-{
-    pcl::PointCloud<int>::Ptr keypoints(new pcl::PointCloud<int>);
-
-    // Convert the cloud to range image.
-    int imageSizeX = 640, imageSizeY = 480;
-    float centerX = (640.0f / 2.0f), centerY = (480.0f / 2.0f);
-    float focalLengthX = 525.0f, focalLengthY = focalLengthX;
-    Eigen::Affine3f sensorPose = Eigen::Affine3f(Eigen::Translation3f(cloud->sensor_origin_[0],
-                                                 cloud->sensor_origin_[1],
-                                                 cloud->sensor_origin_[2])) *
-                                                 Eigen::Affine3f(cloud->sensor_orientation_);
-
-    float noiseLevel = 0.0f, minimumRange = 0.0f;
-    pcl::RangeImagePlanar rangeImage;
-    rangeImage.createFromPointCloudWithFixedSize(*cloud, imageSizeX, imageSizeY,
-                                                 centerX, centerY, focalLengthX, focalLengthX,
-                                                 sensorPose, pcl::RangeImage::CAMERA_FRAME,
-                                                 noiseLevel, minimumRange);
-
-    pcl::RangeImageBorderExtractor borderExtractor;
-    // Keypoint detection object.
-    pcl::NarfKeypoint detector(&borderExtractor);
-    detector.setRangeImage(&rangeImage);
-    // The support size influences how big the surface of interest will be,
-    // when finding keypoints from the border information.
-    detector.getParameters().support_size = 0.2f;
-    detector.compute(*keypoints);
-
-    // Visualize the keypoints.
-    pcl::visualization::RangeImageVisualizer viewer("NARF keypoints");
-    viewer.showRangeImage(rangeImage);
-    for (size_t i = 0; i < keypoints->points.size(); ++i)
-    {
-        viewer.markPoint(keypoints->points[i] % rangeImage.width,
-                         keypoints->points[i] / rangeImage.width,
-                         // Set the color of the pixel to red (the background
-                         // circle is already that color). All other parameters
-                         // are left untouched, check the API for more options.
-                         pcl::visualization::Vector3ub(1.0f, 0.0f, 0.0f));
-    }
-
-
-
-    /* Put the points in a cloud */
-    // NOT IMPLEMENTED AND NOT TESTED
-
-    /**
-      this->keyPoints->points.resize(keypointIndices.points.size());
-      for (size_t i=0; i<keypointIndices.points.size(); ++i)
-      {
-          this->keyPoints->points[i].getVector3fMap () = this->rangeImage->points[keypointIndices.points[i]].getVector3fMap();
-          this->keyPoints->points[i].r = 0;
-          this->keyPoints->points[i].g = 255;
-          this->keyPoints->points[i].b = 0;
-          //this->keyPoints->points[i].size
-      }
-
-      *this->cloud += *this->keyPoints;  */
-
-    while (!viewer.wasStopped())
-        {
-            viewer.spinOnce();
-            // Sleep 100ms to go easy on the CPU.
-            pcl_sleep(0.1);
-        }
-
-    pcl::PointCloud<pcl::BorderDescription>::Ptr borders(new pcl::PointCloud<pcl::BorderDescription>);
-    borderExtractor.compute(*borders);
-    pcl::visualization::RangeImageVisualizer* viewer2 = NULL;
-        viewer2 = pcl::visualization::RangeImageVisualizer::getRangeImageBordersWidget(rangeImage,
-                 -std::numeric_limits<float>::infinity(),
-                 std::numeric_limits<float>::infinity(),
-                 false, *borders, "Borders");
-
-        while (!viewer2->wasStopped())
-            {
-                viewer2->spinOnce();
-                // Sleep 100ms to go easy on the CPU.
-                pcl_sleep(0.1);
-            }
-
-    // The NARF estimator needs the indices in a vector, not a cloud.
-    pcl::PointCloud<pcl::Narf36>::Ptr descriptors(new pcl::PointCloud<pcl::Narf36>);
-    std::vector<int> keypoints2;
-    keypoints2.resize(keypoints->points.size());
-    for (unsigned int i = 0; i < keypoints->size(); ++i)
-        keypoints2[i] = keypoints->points[i];
-    // NARF estimation object.
-    pcl::NarfDescriptor narf(&rangeImage, &keypoints2);
-    // Support size: choose the same value you used for keypoint extraction.
-    narf.getParameters().support_size = 0.2f;
-    // If true, the rotation invariant version of NARF will be used. The histogram
-    // will be shifted according to the dominant orientation to provide robustness to
-    // rotations around the normal.
-    narf.getParameters().rotation_invariant = true;
-
-    narf.compute(*descriptors);
-
-    std::cout << "Extracted "<<descriptors->size()<<" descriptors for "
-              <<keypoints->points.size()<< " keypoints.\n";
-}
-
-
 
 pcl::PointCloud<pcl::Normal>::Ptr PointCloudManipulator::computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius)
 {
@@ -435,7 +298,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudManipulator::computeSurfacePoin
     return (normals);
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::detectKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, float minScale,
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::detectSIFTKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, float minScale,
                                                             int nrOctaves, int nrScalesPerOctave, float minContrast)
 {
     pcl::SIFTKeypoint<pcl::PointXYZRGB, pcl::PointWithScale> siftDetect;
@@ -536,6 +399,17 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterShadowPoint(
     return filteredCloud;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterOutlier(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud)
+{
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>());
+    sor.setInputCloud (inCloud);
+    sor.setMeanK (20);
+    sor.setStddevMulThresh (1.0);
+    sor.filter (*cloud_filtered);
+    return cloud_filtered;
+}
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double limitMin, double limitMax, QString field)
 {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -547,7 +421,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::filterPassThrough(
     return filteredCloud;
 }
 
-pcl::PointCloud<pcl::FPFHSignature33>::Ptr PointCloudManipulator::computeLocalDescriptors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
+pcl::PointCloud<pcl::FPFHSignature33>::Ptr PointCloudManipulator::computeLocalDescriptorsFPFH(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
                                                                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints, float featureRadius)
 {
     pcl::FPFHEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfhEstimation;
@@ -562,11 +436,45 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr PointCloudManipulator::computeLocalDe
     return localDescriptors;
 }
 
-Eigen::Matrix4f PointCloudManipulator::computeInitialAlignment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors,
+pcl::PointCloud<pcl::SHOT1344>::Ptr PointCloudManipulator::computeLocalDescriptorsSHOTColor(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, pcl::PointCloud<pcl::Normal>::Ptr normals ,
+                                                                                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr keyPoints,float featureRadius)
+{
+    pcl::SHOTColorEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::SHOT1344> shot;
+    pcl::PointCloud<pcl::SHOT1344>::Ptr localDescriptors (new pcl::PointCloud<pcl::SHOT1344>);
+    shot.setNumberOfThreads(8);
+    shot.setInputCloud(keyPoints);
+    shot.setSearchSurface(points);
+    shot.setInputNormals(normals);
+    shot.setRadiusSearch(featureRadius);
+    shot.compute(*localDescriptors);
+    return (localDescriptors);
+}
+
+Eigen::Matrix4f PointCloudManipulator::computeInitialAlignmentFPFH(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr sourceDescriptors,
                                                                pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints, pcl::PointCloud<pcl::FPFHSignature33>::Ptr targetDescriptors,
                                                                float minSampleDistance, float maxCorrespondenceDistance, int nrIterations)
 {
     pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGB, pcl::PointXYZRGB, pcl::FPFHSignature33> sacInitAlign;
+    sacInitAlign.setMinSampleDistance(minSampleDistance);
+    sacInitAlign.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
+    sacInitAlign.setMaximumIterations(nrIterations);
+
+    sacInitAlign.setInputSource(sourcePoints);
+    sacInitAlign.setSourceFeatures(sourceDescriptors);
+    sacInitAlign.setInputTarget(targetPoints);
+    sacInitAlign.setTargetFeatures(targetDescriptors);
+
+    pcl::PointCloud<pcl::PointXYZRGB> regOutput;
+    sacInitAlign.align(regOutput);
+
+    return (sacInitAlign.getFinalTransformation());
+}
+
+Eigen::Matrix4f PointCloudManipulator::computeInitialAlignmentSHOTColor(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::SHOT1344>::Ptr sourceDescriptors,
+                                                                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints, pcl::PointCloud<pcl::SHOT1344>::Ptr targetDescriptors,
+                                                                        float minSampleDistance, float maxCorrespondenceDistance, int nrIterations)
+{
+    pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGB, pcl::PointXYZRGB, pcl::SHOT1344> sacInitAlign;
     sacInitAlign.setMinSampleDistance(minSampleDistance);
     sacInitAlign.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
     sacInitAlign.setMaximumIterations(nrIterations);
@@ -609,26 +517,44 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlane(pcl::
     return (cloud_plane);
 }
 
-PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud)
+PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, QString keyPoints, QString descriptors)
 {
     PointCloudFeatures features;
     features.points = inCloud;
 
-    // CONTRAST IS THE LAST PART (0.01, 3, 3, 0.2)
-    //features.keyPoints = detectKeyPoints(inCloud, 0.01, 3, 3, 0.0);
-    features.keyPoints = detectKeyPoints(features.points, 0.01, 3, 3, 0.0);
-    std::cout << "Found  keypoints: " ;
-    std::cout << features.keyPoints->size() << std::endl;
-
-    //features.normals = computeSurfaceNormals(inCloud, 0.05);
+    // Normals
     features.normals = computeSurfaceNormals(features.points, 0.2);
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
 
-    //features.localDescriptors = computeLocalDescriptors(inCloud, features.normals, features.keyPoints, 0.15);
-    features.localDescriptors = computeLocalDescriptors(features.points, features.normals, features.keyPoints, 0.15);
-    std::cout << "Found descriptors: " ;
-    std::cout << features.localDescriptors->size() << std::endl;
+    // Keypoints
+    if(QString::compare(keyPoints, "SIFT", Qt::CaseInsensitive) == 0){
+        // CONTRAST IS THE LAST PART (0.01, 3, 3, 0.2)
+        features.keyPoints = detectSIFTKeyPoints(features.points, 0.01, 3, 3, 0.0);
+        std::cout << "Found SIFT keypoints: " ;
+        std::cout << features.keyPoints->size() << std::endl;
+    }
+    else if(QString::compare(keyPoints, "VOXEL", Qt::CaseInsensitive) == 0){
+        features.keyPoints = filterVoxel(features.points, 0.08);
+        std::cout << "Found VOXEL keypoints: " ;
+        std::cout << features.keyPoints->size() << std::endl;
+    }
+
+    // Descriptors
+    if(QString::compare(descriptors, "FPFH", Qt::CaseInsensitive) == 0){
+        features.localDescriptorsFPFH = computeLocalDescriptorsFPFH(features.points, features.normals, features.keyPoints, 0.15);
+        std::cout << "Found FPFH descriptors: " ;
+        std::cout << features.localDescriptorsFPFH->size() << std::endl;
+    }
+    else if(QString::compare(descriptors, "SHOTCOLOR", Qt::CaseInsensitive) == 0){
+        features.localDescriptorsSHOTColor = computeLocalDescriptorsSHOTColor(features.points, features.normals,features.keyPoints,0.15);
+        std::cout << "Found SHOTColor descriptors: " ;
+        std::cout << features.localDescriptorsSHOTColor->size() << std::endl;
+    }
+
+
+
+
     return features;
 }
 
@@ -852,10 +778,10 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
         points2->points[i].b = 100;
     }
 
-    PointCloudFeatures features1 = computeFeatures(points1);
-    PointCloudFeatures features2 = computeFeatures(points2);
+    PointCloudFeatures features1 = computeFeatures(points1, "SIFT", "FPFH");
+    PointCloudFeatures features2 = computeFeatures(points2, "SIFT", "FPFH");
 //    Eigen::Matrix4f tform = Eigen::Matrix4f::Identity ();
-//    tform = computeInitialAlignment(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
+//    tform = computeInitialAlignmentFPFH(features1.keyPoints, features1.localDescriptors, features2.keyPoints, features2.localDescriptors, 0.025, 0.01, 500);
 //    std::cout << tform << std::endl;
 
 //    pcl::visualization::PCLVisualizer vis;
@@ -886,7 +812,7 @@ void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud
 
     // CORRESPONDENCE USING CORRESPONDENCEESTIMATION
     pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
-    all_correspondences = findCorrespondences(features1.localDescriptors, features2.localDescriptors);
+    all_correspondences = findCorrespondences(features1.localDescriptorsFPFH, features2.localDescriptorsFPFH);
     std::cout << "CorrespondenceEstimation correspondences ALL: ";
     std::cout << all_correspondences->size() << std::endl;
 
@@ -986,7 +912,7 @@ void PointCloudManipulator::alignClouds(QStringList fileNames)
 //            tmpCloud->points[i].g = (i+1)*30;
 //            tmpCloud->points[i].b = (i+1)*30;
 //        }
-        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud);
+        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
         pointClouds.push_back(tmpFeature);
     }
 
@@ -1017,7 +943,7 @@ void PointCloudManipulator::alignClouds(QStringList fileNames)
 
     for(int k = 0; k<pointClouds.size()-1; k++){
         pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
-        all_correspondences = findCorrespondences(pointClouds.at(k).localDescriptors, pointClouds.at(k+1).localDescriptors);
+        all_correspondences = findCorrespondences(pointClouds.at(k).localDescriptorsFPFH, pointClouds.at(k+1).localDescriptorsFPFH);
         std::cout << "CorrespondenceEstimation correspondences ALL: ";
         std::cout << all_correspondences->size() << std::endl;
 
@@ -1096,46 +1022,39 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
         switch(i){
         case 0:
-            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.4, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.7, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.8, 2.7, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.3, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.3, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 0.8, 2.1, "z");
             break;
         case 1:
-            tmpCloud = filterPassThrough(tmpCloud, -0.8, 0.9, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -0.7, 0.0, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.9, 1.6, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.6, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.2, 0.5, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
             break;
         case 2:
             tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.4, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -0.8, 0.4, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.6, 2.1, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 0.8, 4.0, "z");
             break;
         }
-        keyPointsNARF(tmpCloud);
         tmpCloud = filterVoxel(tmpCloud, 0.01);
-        //tmpCloud = extractPlane(tmpCloud, 0.1);
+        tmpCloud = filterOutlier(tmpCloud);
+        tmpCloud = extractPlane(tmpCloud, 0.1);
 
-        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud);
+        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
+        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "VOXEL", "FPFH");
+        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
         pointClouds.push_back(tmpFeature);
     }
-    for(int k = 0; k<fileNames.size(); k++){
-        pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>());
-        sor.setInputCloud (pointClouds.at(k).points);
-        sor.setMeanK (20);
-        sor.setStddevMulThresh (1.0);
-        sor.filter (*cloud_filtered);
-        std::cout << "Did it" << std::endl;
-        *pointClouds.at(k).points = *cloud_filtered;
-    }
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
+
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr icpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     *tmpAligned = *pointClouds.at(0).points;
     *icpCloud = *pointClouds.at(0).points;
     *originalAligned = *originalClouds.at(0);
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-    icp.setMaxCorrespondenceDistance(0.6);
+    icp.setMaxCorrespondenceDistance(0.3);
     icp.setMaximumIterations(10000);
     icp.setTransformationEpsilon(1e-10);
     icp.setEuclideanFitnessEpsilon(0.0000001);
@@ -1143,13 +1062,16 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
     for(int k = 0; k<pointClouds.size()-1; k++){
         // Initial aligment
-        Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
-        transSVD = computeInitialAlignment(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptors,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptors,0.3,1.0,1000);
-        std::cout << transSVD << std::endl;
-        visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(0).points, transSVD);
+        Eigen::Matrix4f initTrans = Eigen::Matrix4f::Identity ();
+        initTrans = computeInitialAlignmentFPFH(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsFPFH,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsFPFH,0.3,1.0,1000);
+        //initTrans = computeInitialAlignmentSHOTColor(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsSHOTColor,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsSHOTColor,0.5,1.0,1000);
+        std::cout << initTrans << std::endl;
+        visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(0).points, initTrans);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
-        Eigen::Matrix4f trans = transSVD.inverse();
-        pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,trans);
+        Eigen::Matrix4f initTransInv = initTrans.inverse();
+        pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,initTransInv);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpk (new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::transformPointCloud(*originalClouds.at(k+1),*tmpk,initTransInv);
 
         *tmpAligned = *tmpAligned + *tmp;
 
@@ -1165,8 +1087,8 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
             std::cout << k << std::endl;
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpOrig (new pcl::PointCloud<pcl::PointXYZRGB>());
             transICP = icp.getFinalTransformation();
-            Eigen::Matrix4f trans = transSVD.inverse();
-            pcl::transformPointCloud(*originalClouds.at(k+1), *tmpOrig, trans);
+            Eigen::Matrix4f trans = transICP;
+            pcl::transformPointCloud(*tmpk, *tmpOrig, trans);
             *originalAligned = *originalAligned + *tmpOrig;
         }
 
@@ -1180,39 +1102,10 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
     vis2.addPointCloud(icpCloud, "icp shit");
     vis2.spin();
 
+
     pcl::visualization::PCLVisualizer vis3;
     vis3.addPointCloud(originalAligned, "orignial");
     vis3.spin();
-}
-
-
-
-double PointCloudManipulator::computeCloudResolution(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
-{
-    double resolution = 0.0;
-        int numberOfPoints = 0;
-        int nres;
-        std::vector<int> indices(2);
-        std::vector<float> squaredDistances(2);
-        pcl::search::KdTree<pcl::PointXYZ> tree;
-        tree.setInputCloud(cloud);
-        for (size_t i = 0; i < cloud->size(); ++i)
-        {
-            if (! pcl_isfinite((*cloud)[i].x))
-                continue;
-
-            // Considering the second neighbor since the first is the point itself.
-            nres = tree.nearestKSearch(i, 2, indices, squaredDistances);
-            if (nres == 2)
-            {
-                resolution += sqrt(squaredDistances[1]);
-                ++numberOfPoints;
-            }
-        }
-        if (numberOfPoints != 0)
-            resolution /= numberOfPoints;
-
-        return resolution;
 }
 
 }
