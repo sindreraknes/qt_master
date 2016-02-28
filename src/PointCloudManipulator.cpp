@@ -1013,6 +1013,9 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 {
     std::vector<PointCloudFeatures> pointClouds;
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> originalClouds;
+    std::vector<Eigen::Matrix4f> cameraPositions;
+    cameraPositions.push_back(Eigen::Matrix4f::Identity());
+
 
     for(int i = 0; i<fileNames.size(); i++){
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -1042,8 +1045,8 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         tmpCloud = extractPlane(tmpCloud, 0.1);
 
         //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
-        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "VOXEL", "FPFH");
-        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
+        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "VOXEL", "FPFH");
+        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
         pointClouds.push_back(tmpFeature);
     }
 
@@ -1053,6 +1056,7 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
     *tmpAligned = *pointClouds.at(0).points;
     *icpCloud = *pointClouds.at(0).points;
     *originalAligned = *originalClouds.at(0);
+    // ICP stuff
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
     icp.setMaxCorrespondenceDistance(0.3);
     icp.setMaximumIterations(10000);
@@ -1063,8 +1067,9 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
     for(int k = 0; k<pointClouds.size()-1; k++){
         // Initial aligment
         Eigen::Matrix4f initTrans = Eigen::Matrix4f::Identity ();
-        initTrans = computeInitialAlignmentFPFH(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsFPFH,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsFPFH,0.3,1.0,1000);
-        //initTrans = computeInitialAlignmentSHOTColor(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsSHOTColor,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsSHOTColor,0.5,1.0,1000);
+        Eigen::Matrix4f cameraPos = Eigen::Matrix4f::Identity();
+        //initTrans = computeInitialAlignmentFPFH(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsFPFH,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsFPFH,0.3,1.0,1000);
+        initTrans = computeInitialAlignmentSHOTColor(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsSHOTColor,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsSHOTColor,0.5,1.0,1000);
         std::cout << initTrans << std::endl;
         visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(0).points, initTrans);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -1074,6 +1079,7 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         pcl::transformPointCloud(*originalClouds.at(k+1),*tmpk,initTransInv);
 
         *tmpAligned = *tmpAligned + *tmp;
+        cameraPos = initTrans;
 
         // ICP
         icp.setInputSource(tmp);
@@ -1090,6 +1096,10 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
             Eigen::Matrix4f trans = transICP;
             pcl::transformPointCloud(*tmpk, *tmpOrig, trans);
             *originalAligned = *originalAligned + *tmpOrig;
+
+            // Unsure about this one -__-
+            cameraPos = cameraPos*trans.inverse();
+            cameraPositions.push_back(cameraPos);
         }
 
     }
@@ -1105,6 +1115,12 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
     pcl::visualization::PCLVisualizer vis3;
     vis3.addPointCloud(originalAligned, "orignial");
+    vis3.addCoordinateSystem(0.5);
+    Eigen::Affine3f A;
+    A = cameraPositions.at(1);
+    vis3.addCoordinateSystem(0.5, A,0);
+    A = cameraPositions.at(2);
+    vis3.addCoordinateSystem(0.5, A, 0);
     vis3.spin();
 }
 
