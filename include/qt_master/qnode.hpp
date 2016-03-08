@@ -56,6 +56,7 @@ private:
 	ros::Publisher chatter_publisher;
     ros::Subscriber pointCloud2Sub;
     pcl::PointCloud<pcl::PointXYZ> cloud;
+
 };
 
 }  // namespace qt_master

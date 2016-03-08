@@ -1023,30 +1023,69 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
         originalClouds.push_back(tmpCloud);
 
+//        switch(i){
+//        case 0:
+//            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.3, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.3, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 0.8, 2.1, "z");
+//            break;
+//        case 1:
+//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.6, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, -0.2, 0.5, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
+//            break;
+//        case 2:
+//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.4, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 0.8, 4.0, "z");
+//            break;
+//        }
+
+
+        // COLOR
+//        switch(i){
+//        case 0:
+//            tmpCloud = filterPassThrough(tmpCloud, -0.8, 0.9, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.4, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 1.8, "z");
+//            break;
+//        case 1:
+//            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, -0.7, 0.4, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 0.7, 2.0, "z");
+//            break;
+//        case 2:
+//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.5, "x");
+//            tmpCloud = filterPassThrough(tmpCloud, 0.0, 0.6, "y");
+//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
+//            break;
+//        }
+
+        // ROBOT CELL 03.03
         switch(i){
         case 0:
-            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.3, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.8, 0.8, "x");
             tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.3, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.8, 2.1, "z");
+            tmpCloud = filterPassThrough(tmpCloud, 1.0, 1.7, "z");
             break;
         case 1:
-            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.6, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -0.2, 0.5, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.5, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.0, 0.1, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 1.3, 2.6, "z");
             break;
         case 2:
-            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.4, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.3, "x");
             tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.8, 4.0, "z");
+            tmpCloud = filterPassThrough(tmpCloud, 1.2, 2.6, "z");
             break;
         }
         tmpCloud = filterVoxel(tmpCloud, 0.01);
-        tmpCloud = filterOutlier(tmpCloud);
+        //tmpCloud = filterOutlier(tmpCloud);
         tmpCloud = extractPlane(tmpCloud, 0.1);
 
-        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
+        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
         //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "VOXEL", "FPFH");
-        PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
+        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
         pointClouds.push_back(tmpFeature);
     }
 
@@ -1068,18 +1107,20 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         // Initial aligment
         Eigen::Matrix4f initTrans = Eigen::Matrix4f::Identity ();
         Eigen::Matrix4f cameraPos = Eigen::Matrix4f::Identity();
-        //initTrans = computeInitialAlignmentFPFH(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsFPFH,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsFPFH,0.3,1.0,1000);
-        initTrans = computeInitialAlignmentSHOTColor(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsSHOTColor,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsSHOTColor,0.5,1.0,1000);
+        initTrans = computeInitialAlignmentFPFH(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsFPFH,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsFPFH,0.08,1.0,1000);
+        //initTrans = computeInitialAlignmentSHOTColor(pointClouds.at(0).keyPoints,pointClouds.at(0).localDescriptorsSHOTColor,pointClouds.at(k+1).keyPoints, pointClouds.at(k+1).localDescriptorsSHOTColor,0.3,1.0,1000);
         std::cout << initTrans << std::endl;
         visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(0).points, initTrans);
+
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
         Eigen::Matrix4f initTransInv = initTrans.inverse();
         pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,initTransInv);
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpk (new pcl::PointCloud<pcl::PointXYZRGB>());
-        pcl::transformPointCloud(*originalClouds.at(k+1),*tmpk,initTransInv);
+        //pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpk (new pcl::PointCloud<pcl::PointXYZRGB>());
+        //pcl::transformPointCloud(*originalClouds.at(k+1),*tmpk,initTransInv);
 
         *tmpAligned = *tmpAligned + *tmp;
-        cameraPos = initTrans;
+
+        cameraPos = initTrans.inverse();
 
         // ICP
         icp.setInputSource(tmp);
@@ -1091,14 +1132,14 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
             *icpCloud = *icpCloud + *outCloud;
             std::cout << "Converged! ";
             std::cout << k << std::endl;
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpOrig (new pcl::PointCloud<pcl::PointXYZRGB>());
+            //pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpOrig (new pcl::PointCloud<pcl::PointXYZRGB>());
             transICP = icp.getFinalTransformation();
-            Eigen::Matrix4f trans = transICP;
-            pcl::transformPointCloud(*tmpk, *tmpOrig, trans);
-            *originalAligned = *originalAligned + *tmpOrig;
+            //pcl::transformPointCloud(*tmpk, *tmpOrig, transICP);
+            //*originalAligned = *originalAligned + *tmpOrig;
 
             // Unsure about this one -__-
-            cameraPos = cameraPos*trans.inverse();
+            //cameraPos = cameraPos*transICP;
+            cameraPos = transICP*cameraPos;
             cameraPositions.push_back(cameraPos);
         }
 
@@ -1114,13 +1155,27 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
 
     pcl::visualization::PCLVisualizer vis3;
-    vis3.addPointCloud(originalAligned, "orignial");
-    vis3.addCoordinateSystem(0.5);
-    Eigen::Affine3f A;
-    A = cameraPositions.at(1);
-    vis3.addCoordinateSystem(0.5, A,0);
-    A = cameraPositions.at(2);
-    vis3.addCoordinateSystem(0.5, A, 0);
+    for(int i = 0; i<3; i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        QString s = "cloud";
+        s.append(QString::number(i));
+       // Eigen::Matrix4f tmp2 = Eigen::Matrix4f::Identity();
+       // tmp2 = ;
+        pcl::transformPointCloud(*originalClouds.at(i),*tmp,cameraPositions.at(i));
+        std::cout << cameraPositions.at(i) << std::endl;
+        vis3.addPointCloud(tmp,s.toStdString());
+    }
+    //vis3.addPointCloud(originalAligned, "orignial");
+//    vis3.addCoordinateSystem(0.5);
+//    Eigen::Affine3f A;
+//    A = cameraPositions.at(1);
+//    vis3.addCoordinateSystem(0.5, A);
+//    std::cout << "Cam1: " << std::endl;
+//    std::cout <<  cameraPositions.at(1) << std::endl;
+//    A = cameraPositions.at(2);
+//    std::cout << "Cam2: " << std::endl;
+//    std::cout <<  cameraPositions.at(2) << std::endl;
+//    vis3.addCoordinateSystem(0.5, A, 0);
     vis3.spin();
 }
 
