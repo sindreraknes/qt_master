@@ -1023,43 +1023,7 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
         originalClouds.push_back(tmpCloud);
 
-//        switch(i){
-//        case 0:
-//            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.3, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.3, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 0.8, 2.1, "z");
-//            break;
-//        case 1:
-//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.6, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, -0.2, 0.5, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
-//            break;
-//        case 2:
-//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.4, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 0.8, 4.0, "z");
-//            break;
-//        }
 
-
-        // COLOR
-//        switch(i){
-//        case 0:
-//            tmpCloud = filterPassThrough(tmpCloud, -0.8, 0.9, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.4, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 1.8, "z");
-//            break;
-//        case 1:
-//            tmpCloud = filterPassThrough(tmpCloud, -0.6, 0.4, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, -0.7, 0.4, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 0.7, 2.0, "z");
-//            break;
-//        case 2:
-//            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.5, "x");
-//            tmpCloud = filterPassThrough(tmpCloud, 0.0, 0.6, "y");
-//            tmpCloud = filterPassThrough(tmpCloud, 1.1, 2.7, "z");
-//            break;
-//        }
 
         // ROBOT CELL 03.03
         switch(i){
@@ -1079,7 +1043,7 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
             tmpCloud = filterPassThrough(tmpCloud, 1.2, 2.6, "z");
             break;
         }
-        tmpCloud = filterVoxel(tmpCloud, 0.01);
+        tmpCloud = filterVoxel(tmpCloud, 0.01); //0.01
         //tmpCloud = filterOutlier(tmpCloud);
         tmpCloud = extractPlane(tmpCloud, 0.1);
 
@@ -1091,10 +1055,8 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr icpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     *tmpAligned = *pointClouds.at(0).points;
     *icpCloud = *pointClouds.at(0).points;
-    *originalAligned = *originalClouds.at(0);
     // ICP stuff
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
     icp.setMaxCorrespondenceDistance(0.3);
@@ -1155,6 +1117,7 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
 
 
     pcl::visualization::PCLVisualizer vis3;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     for(int i = 0; i<3; i++){
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
         QString s = "cloud";
@@ -1164,19 +1127,22 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         pcl::transformPointCloud(*originalClouds.at(i),*tmp,cameraPositions.at(i));
         std::cout << cameraPositions.at(i) << std::endl;
         vis3.addPointCloud(tmp,s.toStdString());
+        *originalAligned += *tmp;
     }
-    //vis3.addPointCloud(originalAligned, "orignial");
-//    vis3.addCoordinateSystem(0.5);
-//    Eigen::Affine3f A;
-//    A = cameraPositions.at(1);
-//    vis3.addCoordinateSystem(0.5, A);
-//    std::cout << "Cam1: " << std::endl;
-//    std::cout <<  cameraPositions.at(1) << std::endl;
-//    A = cameraPositions.at(2);
-//    std::cout << "Cam2: " << std::endl;
-//    std::cout <<  cameraPositions.at(2) << std::endl;
-//    vis3.addCoordinateSystem(0.5, A, 0);
+  //vis3.addPointCloud(originalAligned, "orignial");
+    vis3.addCoordinateSystem(0.5);
+    Eigen::Affine3f A;
+    A = cameraPositions.at(1);
+    vis3.addCoordinateSystem(0.5, A);
+    std::cout << "Cam1: " << std::endl;
+    std::cout <<  cameraPositions.at(1) << std::endl;
+    A = cameraPositions.at(2);
+    std::cout << "Cam2: " << std::endl;
+    std::cout <<  cameraPositions.at(2) << std::endl;
+    vis3.addCoordinateSystem(0.5, A);
     vis3.spin();
+
+    pcl::io::savePCDFileBinary("/home/sindre/aligned.pcd", *originalAligned);
 }
 
 }
