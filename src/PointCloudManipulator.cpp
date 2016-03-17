@@ -1,5 +1,6 @@
 #include "../include/qt_master/PointCloudManipulator.hpp"
 
+
 namespace qt_master {
 
 // Constructor
@@ -17,15 +18,16 @@ QStringList PointCloudManipulator::getFilters()
     filterList.append("VoxelGrid");
     filterList.append("Median");
     filterList.append("Normals");
-    filterList.append("Translate");
+    filterList.append("Plane extraction");
     filterList.append("Bilateral");
 
     return filterList;
 
 }
 
-void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud,pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double d1, double d2, double d3, QString xyz)
+void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double d1, double d2, double d3, QString xyz)
 {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     switch(selectedFilter)
     {
     case 0:
@@ -66,9 +68,13 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
         lastFiltered.append(QString::number(d2));
         break;
     case 4:
-        // TRANSLATION MATRIX
-        //
-        //translateCloud(inCloud, d1, d2, d3);
+        // Plane extraction
+        cloud = extractPlane(inCloud, d1);
+        Q_EMIT sendNewPointCloud(cloud, "filteredCloud");
+        lastFiltered = "Plane extraction, ";
+        lastFiltered.append(" Radius: ");
+        lastFiltered.append(QString::number(d1));
+        break;
     case 5:
         filterBilateral(inCloud, d1, d2);
         lastFiltered = "Bilateral filter, ";
@@ -76,6 +82,7 @@ void PointCloudManipulator::runFilter(int selectedFilter,pcl::PointCloud<pcl::Po
         lastFiltered.append(QString::number(d1));
         lastFiltered.append(" SigmaR: ");
         lastFiltered.append(QString::number(d2));
+        break;
     default:
         ;
         // SOMETHING WENT WRONG
@@ -153,16 +160,9 @@ void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
         break;
     case 4:
         // TRANSLATION
-        labels.replace(0, "Transl. X: ");
-        labels.replace(1, "Transl. Z: ");
-        labels.replace(2, "Rotation Y: ");
+        labels.replace(0, "Radius: ");
         show.replace(0, true);
-        show.replace(1, true);
-        show.replace(2, true);
-        stepsAndRange.replace(2, 1.0);
-        stepsAndRange.replace(7, 0.0);
-        stepsAndRange.replace(8, 360.0);
-
+        stepsAndRange.replace(0, 0.01);
         Q_EMIT sendNewIndexInfo(labels, show, stepsAndRange);
         break;
     case 5:
@@ -184,7 +184,7 @@ void PointCloudManipulator::getNewIndexInfo(int selectedFilter)
     }
 }
 
-void PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double limitMin, double limitMax, QString field)
+void PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double limitMin, double limitMax, QString field)
 {
     passThroughFilter.setInputCloud(inCloud);
     passThroughFilter.setFilterFieldName(field.toStdString());
@@ -194,7 +194,7 @@ void PointCloudManipulator::filterPassThrough(pcl::PointCloud<pcl::PointXYZ>::Pt
     Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
-void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double leafSize)
+void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double leafSize)
 {
     float leaf = leafSize;
     voxelGridFilter.setInputCloud(inCloud);
@@ -203,7 +203,7 @@ void PointCloudManipulator::filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr 
     Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
-void PointCloudManipulator::filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double windowSize, double maxMovement)
+void PointCloudManipulator::filterMedian(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double windowSize, double maxMovement)
 {
     int windowSizeTmp = (int)windowSize;
     medianFilter.setInputCloud(inCloud);
@@ -213,26 +213,27 @@ void PointCloudManipulator::filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inC
     Q_EMIT sendNewPointCloud(outCloud, "filteredCloud");
 }
 
-void PointCloudManipulator::filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double radius, double nrToDisplay)
+void PointCloudManipulator::filterNormal(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius, double nrToDisplay)
 {
     int tmpDisplay = (int) nrToDisplay;
     visualizer.reset(new pcl::visualization::PCLVisualizer ("viewer2", false));
     pcl::PointCloud<pcl::Normal>::Ptr normals_out (new pcl::PointCloud<pcl::Normal>);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> norm_est;
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> norm_est;
     norm_est.setSearchMethod(tree);
-    norm_est.setRadiusSearch (radius);
+    //norm_est.setRadiusSearch (radius);
+    norm_est.setKSearch(10);
     norm_est.setInputCloud (inCloud);
     norm_est.compute (*normals_out);
-    visualizer->addPointCloud<pcl::PointXYZ> (inCloud, "filteredCloud");
-    visualizer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal> (inCloud, normals_out, tmpDisplay, 0.05, "normals");
+    visualizer->addPointCloud<pcl::PointXYZRGB> (inCloud, "filteredCloud");
+    visualizer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (inCloud, normals_out, tmpDisplay, 0.05, "normals");
     visualizer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0,0.0,1.0, "normals");
     Q_EMIT sendNewVisualizer(visualizer);
 }
 
-void PointCloudManipulator::filterBilateral(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double sigmaS, float sigmaR)
+void PointCloudManipulator::filterBilateral(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double sigmaS, float sigmaR)
 {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     bilateralFilter.setInputCloud(inCloud);
     bilateralFilter.setSigmaS(sigmaS);
     bilateralFilter.setSigmaR(sigmaR);
@@ -240,9 +241,9 @@ void PointCloudManipulator::filterBilateral(pcl::PointCloud<pcl::PointXYZ>::Ptr 
     Q_EMIT sendNewPointCloud(filteredCloud, "filteredCloud");
 }
 
-void PointCloudManipulator::translateCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr  inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ)
+void PointCloudManipulator::translateCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr  inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ)
 {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr translatedCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr translatedCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
     double x = M_PI/180*rX;
     double y = M_PI/180*rY;
@@ -273,11 +274,13 @@ QString PointCloudManipulator::getLastFiltered()
 
 pcl::PointCloud<pcl::Normal>::Ptr PointCloudManipulator::computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius)
 {
-    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> normal_estimation;
+    pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> normal_estimation;
     pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    normal_estimation.setNumberOfThreads(8);
     normal_estimation.setSearchMethod (tree);
-    normal_estimation.setRadiusSearch (radius);
+    //normal_estimation.setRadiusSearch (radius);
+    normal_estimation.setKSearch(10);
     normal_estimation.setInputCloud (input);
     normal_estimation.compute (*normals);
     return (normals);
@@ -296,6 +299,82 @@ pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudManipulator::computeSurfacePoin
     normal_estimation.setInputCloud (input);
     normal_estimation.compute (*normals);
     return (normals);
+}
+
+std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> PointCloudManipulator::extractClusters(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, double distance)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_f (new pcl::PointCloud<pcl::PointXYZRGB>), outcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr incloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::copyPointCloud(*input,*incloud);
+
+    // Create the segmentation object for the planar model and set all the parameters
+    pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB> ());
+    seg.setOptimizeCoefficients (true);
+    seg.setModelType (pcl::SACMODEL_PLANE);
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMaxIterations (100);
+    seg.setDistanceThreshold (distance);
+
+    int i=0, nr_points = (int) incloud->points.size ();
+
+
+    while (incloud->points.size () > 0.3 * nr_points)
+    {
+        // Segment the largest planar component from the remaining cloud
+        seg.setInputCloud (incloud);
+        seg.segment (*inliers, *coefficients);
+        if (inliers->indices.size () == 0)
+        {
+            std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+            break;
+        }
+
+        // Extract the planar inliers from the input cloud
+        pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+        extract.setInputCloud (incloud);
+        extract.setIndices (inliers);
+        extract.setNegative (false);
+
+        // Get the points associated with the planar surface
+        extract.filter (*cloud_plane);
+
+        // Remove the planar inliers, extract the rest
+        extract.setNegative (true);
+        extract.filter (*cloud_f);
+        *incloud = *cloud_f;
+    }
+
+    // Creating the KdTree object for the search method of the extraction
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+    tree->setInputCloud (incloud);
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
+    ec.setClusterTolerance (0.01); // 2cm
+    ec.setMinClusterSize (200);
+    ec.setMaxClusterSize (25000);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (incloud);
+    ec.extract (cluster_indices);
+
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+    for(int i = 0; i< cluster_indices.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpcloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::copyPointCloud(*incloud,cluster_indices[i],*tmpcloud);
+        clusters.push_back(tmpcloud);
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr clusterCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    for(int i = 0; i< clusters.size(); i++){
+        *clusterCloud += *clusters.at(i);
+    }
+
+    Q_EMIT sendNewPointCloud(clusterCloud, "filteredCloud");
+
+    return (clusters);
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::detectSIFTKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, float minScale,
@@ -523,7 +602,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     features.points = inCloud;
 
     // Normals
-    features.normals = computeSurfaceNormals(features.points, 0.2);
+    features.normals = computeSurfaceNormals(features.points, 0.005);
     std::cout << "Found normals: " ;
     std::cout << features.normals->size() << std::endl;
 
@@ -535,7 +614,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
         std::cout << features.keyPoints->size() << std::endl;
     }
     else if(QString::compare(keyPoints, "VOXEL", Qt::CaseInsensitive) == 0){
-        features.keyPoints = filterVoxel(features.points, 0.08);
+        features.keyPoints = filterVoxel(features.points, 0.001);
         std::cout << "Found VOXEL keypoints: " ;
         std::cout << features.keyPoints->size() << std::endl;
     }
@@ -756,6 +835,133 @@ void PointCloudManipulator::visualizeTransformation(pcl::PointCloud<pcl::PointXY
     pcl::transformPointCloud(*targetPoints, *tmp2, transform);
     vis.addPointCloud(tmp2, blue, "target2", b);
     vis.spin();
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::sampleSTL(QString path, int resolution, int tess_level)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+    pcl::PolygonMesh mesh;
+    pcl::io::loadPolygonFileSTL(path.toStdString(), mesh);
+
+    pcl::PointCloud<pcl::PointXYZ> scaled_mesh;
+    Eigen::Matrix4f scaleMatrix = Eigen::Matrix4f::Identity();
+    scaleMatrix(0,0)=0.001f;
+    scaleMatrix(1,1)=0.001f;
+    scaleMatrix(2,2)=0.001f;
+
+    pcl::fromPCLPointCloud2(mesh.cloud,scaled_mesh);
+    pcl::transformPointCloud(scaled_mesh,scaled_mesh,scaleMatrix);
+    pcl::toPCLPointCloud2(scaled_mesh, mesh.cloud);
+
+    // Create mesh object
+    vtkSmartPointer<vtkPolyData> meshVTK;
+    pcl::VTKUtils::convertToVTK(mesh, meshVTK);
+
+    pcl::visualization::PCLVisualizer generator("Generating traces...");
+    generator.addModelFromPolyData (meshVTK, "mesh", 0);
+    std::vector<pcl::PointCloud<pcl::PointXYZ>, Eigen::aligned_allocator<pcl::PointCloud<pcl::PointXYZ> > > clouds;
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > poses;
+    std::vector<float> enthropies;
+
+    // Generate traces
+    generator.renderViewTesselatedSphere(resolution, resolution, clouds, poses, enthropies, tess_level);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmprgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for(int i=0; i<clouds.size(); i++){
+        Eigen::Matrix4f tmpPose;
+        tmpPose = poses.at(i).inverse();
+        pcl::transformPointCloud(clouds.at(i), *tmp, tmpPose);
+        pcl::copyPointCloud(*tmp, *tmprgb);
+        *outCloud += *tmprgb;
+    }
+
+    for (int i = 0; i< outCloud->points.size(); i++){
+        outCloud->points[i].r = 255;
+        outCloud->points[i].g = 255;
+        outCloud->points[i].b = 255;
+    }
+
+    return outCloud;
+
+}
+
+void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene)
+{
+    std::cout << model->size() << std::endl;
+    std::cout << scene->size() << std::endl;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> sceneModels;
+//    sceneModels = extractClusters(scene, 0.02);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    for(int i = 0; i<sceneModels.size(); i++){
+//        *tmpCloud += *sceneModels.at(i);
+//    }
+//    *scene = *tmpCloud;
+    scene = filterVoxel(scene, 0.01);
+    model = filterVoxel(model, 0.01);
+
+    std::cout << model->size() << std::endl;
+    std::cout << scene->size() << std::endl;
+    PointCloudFeatures modelFeature = computeFeatures(model, "VOXEL", "FPFH");
+    PointCloudFeatures sceneFeature = computeFeatures(scene, "VOXEL", "FPFH");
+
+//    std::vector<int> correspondences;
+//    std::vector<float> correspondenceScores;
+//    findFeatureCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH, correspondences, correspondenceScores);
+//    visualizeCorrespondences(modelFeature.points,modelFeature.keyPoints,sceneFeature.points,sceneFeature.keyPoints,correspondences,correspondenceScores,modelFeature.keyPoints->size());
+//    std::cout << "Vector<int> correspondences ALL: ";
+//    std::cout << correspondences.size() << std::endl;
+
+    // CORRESPONDENCE US3ING CORRESPONDENCEESTIMATION
+    pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
+    all_correspondences = findCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH);
+    std::cout << "CorrespondenceEstimation correspondences ALL: ";
+    std::cout << all_correspondences->size() << std::endl;
+
+//    // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
+//    pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
+//    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.10,1000);
+//    std::cout << "Rejected using sample consensus, new amount is : ";
+//    std::cout << corrRejectSampleConsensus->size() << std::endl;
+    visualizeCorrespondences(modelFeature.points, sceneFeature.points, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, all_correspondences);
+
+
+
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
+    std::vector<pcl::Correspondences> clustered_corrs;
+    pcl::GeometricConsistencyGrouping<pcl::PointXYZRGB, pcl::PointXYZRGB> gc_clusterer;
+    gc_clusterer.setGCSize (0.2);
+    gc_clusterer.setGCThreshold (5.0);
+
+    gc_clusterer.setInputCloud (modelFeature.keyPoints);
+    gc_clusterer.setSceneCloud (sceneFeature.keyPoints);
+    gc_clusterer.setModelSceneCorrespondences (all_correspondences);
+
+    //gc_clusterer.cluster (clustered_corrs);
+    gc_clusterer.recognize (rototranslations, clustered_corrs);
+
+    std::cout << "Model instances found: " << rototranslations.size () << std::endl;
+    for (size_t i = 0; i < rototranslations.size (); ++i)
+    {
+      std::cout << "\n    Instance " << i + 1 << ":" << std::endl;
+      std::cout << "        Correspondences belonging to this instance: " << clustered_corrs[i].size () << std::endl;
+
+      // Print the rotation matrix and translation vector
+      Eigen::Matrix3f rotation = rototranslations[i].block<3,3>(0, 0);
+      Eigen::Vector3f translation = rototranslations[i].block<3,1>(0, 3);
+
+      printf ("\n");
+      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (0,0), rotation (0,1), rotation (0,2));
+      printf ("        R = | %6.3f %6.3f %6.3f | \n", rotation (1,0), rotation (1,1), rotation (1,2));
+      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (2,0), rotation (2,1), rotation (2,2));
+      printf ("\n");
+      printf ("        t = < %0.3f, %0.3f, %0.3f >\n", translation (0), translation (1), translation (2));
+
+      std::cout << "rofl" << std::endl;
+    }
+
+
 }
 
 
@@ -1142,7 +1348,211 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
     vis3.addCoordinateSystem(0.5, A);
     vis3.spin();
 
-    pcl::io::savePCDFileBinary("/home/sindre/aligned.pcd", *originalAligned);
+    pcl::io::savePCDFileBinary("/home/minions/aligned.pcd", *originalAligned);
+}
+
+void PointCloudManipulator::refineAlignment(QStringList fileNames)
+{
+    std::vector<PointCloudFeatures> pointClouds;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloudsOriginal;
+
+    std::vector<Eigen::Matrix4f> cameraPositions;
+    Eigen::Matrix4f cam0 = Eigen::Matrix4f::Identity();
+    cameraPositions.push_back(cam0);
+    Eigen::Matrix4f cam1 = Eigen::Matrix4f::Identity();
+    // This is the matrix from NUC2 to table
+    cam1 <<  0.0200591,  -0.999758 , 0.0089781 ,  0.326005,
+             -0.627877, -0.0195849 , -0.778066 , -0.440615,
+              0.778054 ,0.00997016 , -0.628118 ,   1.98857,
+                     0   ,       0  ,        0  ,        1;
+    cameraPositions.push_back(cam1);
+    Eigen::Matrix4f cam2 = Eigen::Matrix4f::Identity();
+    // This is the matrix from PC to table
+    cam2 <<  0.0267334 ,  0.999128, -0.0320873 , -0.422133,
+             0.515497 ,-0.0412804 , -0.855896 ,-0.0992842,
+            -0.856474, 0.00634012 , -0.516151 ,   1.87861,
+                    0  ,        0   ,       0   ,       1;
+    cameraPositions.push_back(cam2);
+    // This is the matrix from NUC1 to table
+    Eigen::Matrix4f cam3 = Eigen::Matrix4f::Identity();
+    cam3 <<    0.99921, 0.00555718 , 0.0393607  , 0.019021,
+               0.0316395  ,-0.710612 , -0.702872  ,  0.14354,
+               0.0240642 ,  0.703562 , -0.710226  ,  1.12045,
+                       0  ,        0 ,         0   ,       1;
+
+    cameraPositions.push_back(cam3);
+
+
+    for(int i = 0; i<fileNames.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        std::cout << fileNames.at(i).toStdString() << std::endl;
+        pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+
+        //for (int k = 0; k< tmpCloud->points.size(); k++){
+       //     tmpCloud->points[k].r = 255;
+       //     tmpCloud->points[k].g = 255;
+       //     tmpCloud->points[k].b = 255;
+       // }
+
+        // ROBOT CELL
+        switch(i){
+        case 0:
+            tmpCloud = filterPassThrough(tmpCloud, -2.1, 2.1, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.0, 0.9, "y");
+            tmpCloud = filterPassThrough(tmpCloud, -0.6, 3.5, "z");
+            break;
+        case 1:
+            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.5, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.7, 0.9, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 0.7, 4.7, "z");
+            break;
+        case 2:
+            tmpCloud = filterPassThrough(tmpCloud, -1.6, 1.0, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.6, 1.0, "y");
+            tmpCloud = filterPassThrough(tmpCloud, -1.3, 5.0, "z");
+            break;
+        }
+
+        cloudsOriginal.push_back(tmpCloud);
+        tmpCloud = filterVoxel(tmpCloud, 0.01); //0.005
+        //tmpCloud = extractPlane(tmpCloud, 0.1);
+
+        clouds.push_back(tmpCloud);
+
+        //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
+        //pointClouds.push_back(tmpFeature);
+    }
+
+
+
+    pcl::visualization::PCLVisualizer vis1;
+    for(int i=0; i<clouds.size(); i++){
+        //pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        QString s = "cloud";
+        s.append(QString::number(i));
+        //pcl::transformPointCloud(*originalClouds.at(i),*tmp,cameraPositions.at(i));
+        vis1.addPointCloud(clouds.at(i),s.toStdString());
+    }
+    vis1.spin();
+
+
+    pcl::visualization::PCLVisualizer vis2;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> roughClouds;
+    roughClouds.push_back(clouds.at(0));
+    std::vector<Eigen::Matrix4f> cameraPositions2;
+    Eigen::Matrix4f tmp = Eigen::Matrix4f::Identity();
+    cameraPositions2.push_back(tmp);
+    vis2.addPointCloud(clouds.at(0), "cloud0");
+    for(int i=1; i<clouds.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        QString s = "cloud";
+        s.append(QString::number(i));
+        Eigen::Matrix4f tmpMat2 = cameraPositions.at(i);
+        Eigen::Matrix4f tmpMat3 = cameraPositions.at(3);
+        Eigen::Matrix4f final = tmpMat3*tmpMat2.inverse();
+        cameraPositions2.push_back(final);
+        pcl::transformPointCloud(*clouds.at(i),*tmp,final);
+        roughClouds.push_back(tmp);
+        vis2.addPointCloud(tmp,s.toStdString());
+    }
+    vis2.spin();
+
+
+    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+    icp.setMaxCorrespondenceDistance(0.007); // 0.05
+    icp.setMaximumIterations(1000);
+    icp.setTransformationEpsilon(1e-10);
+    icp.setEuclideanFitnessEpsilon(0.0000001);
+    icp.setInputTarget(roughClouds.at(0));
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr icpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    *icpCloud += *roughClouds.at(0);
+
+    for(int i=1; i<roughClouds.size(); i++){
+        icp.setInputSource(roughClouds.at(i));
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        icp.align(*outCloud);
+        Eigen::Matrix4f transICP = Eigen::Matrix4f::Identity();
+        if(icp.hasConverged()){
+            *icpCloud = *icpCloud + *outCloud;
+            std::cout << "Converged! ";
+            std::cout << i << std::endl;
+            //pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpOrig (new pcl::PointCloud<pcl::PointXYZRGB>());
+            transICP = icp.getFinalTransformation();
+            cameraPositions2[i] = transICP*cameraPositions2[i];
+            //pcl::transformPointCloud(*tmpk, *tmpOrig, transICP);
+            //*originalAligned = *originalAligned + *tmpOrig;
+
+        }
+    }
+
+    pcl::visualization::PCLVisualizer vis3;
+    vis3.addPointCloud(icpCloud, "icp");
+    vis3.spin();
+
+    pcl::visualization::PCLVisualizer vis4;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr writeToFileCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    for(int i=0; i<roughClouds.size(); i++){
+        Eigen::Affine3f A;
+        A = cameraPositions2[i];
+        vis4.addCoordinateSystem(0.5, A);
+        QString s = "cloud";
+        s.append(QString::number(i));
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::transformPointCloud(*cloudsOriginal[i], *tmp, cameraPositions2[i]);
+        vis4.addPointCloud(tmp, s.toStdString());
+
+        *writeToFileCloud += *tmp;
+
+    }
+    vis4.spin();
+
+
+    std::ofstream file("/home/minions/alignedMatrices.txt");
+    if (file.is_open())
+    {
+        file << "Matrix for: " << "NUC1" << '\n';
+        file << cameraPositions2.at(0) << '\n' << '\n';
+        file << "Matrix for: " << "NUC2" << '\n';
+        file << cameraPositions2.at(1) << '\n' << '\n';
+        file << "Matrix for: " << "PC" << '\n';
+        file << cameraPositions2.at(2) << '\n' << '\n';
+
+    }
+
+    pcl::io::savePCDFileBinary("/home/minions/alignedWithObject.pcd", *writeToFileCloud);
+
+
+
+
+}
+
+void PointCloudManipulator::roflKinect(QStringList fileNames)
+{
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds;
+    for(int i = 0; i<fileNames.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        std::cout << fileNames.at(i).toStdString() << std::endl;
+        pcl::io::loadPCDFile(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+        clouds.push_back(tmpCloud);
+    }
+
+    for (int k = 0; k< clouds.at(0)->points.size(); k++){
+        clouds.at(0)->points[k].r = 255;
+        clouds.at(0)->points[k].g = 255;
+        clouds.at(0)->points[k].b = 255;
+    }
+    for (int k = 0; k< clouds.at(1)->points.size(); k++){
+        clouds.at(1)->points[k].r = 255;
+        clouds.at(1)->points[k].g = 0;
+        clouds.at(1)->points[k].b = 0;
+    }
+
+    pcl::visualization::PCLVisualizer vis4;
+    vis4.addPointCloud(clouds.at(0), "somefingu");
+    vis4.addPointCloud(clouds.at(1), "somefingu2");
+    vis4.spin();
 }
 
 }

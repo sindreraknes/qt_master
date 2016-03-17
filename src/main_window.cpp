@@ -14,6 +14,7 @@
 #include <iostream>
 #include "../include/qt_master/main_window.hpp"
 
+
 namespace qt_master {
 
 using namespace Qt;
@@ -36,7 +37,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     manipulator = new PointCloudManipulator();
     QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>, QList<double>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>, QList<double>)));
     QObject::connect(manipulator, SIGNAL(sendNewVisualizer(boost::shared_ptr<pcl::visualization::PCLVisualizer>)), this, SLOT(setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer>)));
-    QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr, QString)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr, QString)));
+    QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)));
 
     // Initialize UI
     initializeUI();
@@ -52,8 +53,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::displayPointCloud(QString url, QString name)
 {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
-    if(pcl::io::loadPCDFile<pcl::PointXYZ>(url.toUtf8().constData(), *tmpCloud) == -1){
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    if(pcl::io::loadPCDFile<pcl::PointXYZRGB>(url.toUtf8().constData(), *tmpCloud) == -1){
         std::cout << "Could not load file" << std::endl;
         return;
     }
@@ -64,7 +65,7 @@ void MainWindow::displayPointCloud(QString url, QString name)
     w1->update();
 }
 
-void MainWindow::displayPointCloudLeft(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name)
+void MainWindow::displayPointCloudLeft(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, QString name)
 {
     displayCloud = cloud;
     if(!viewer1->updatePointCloud(displayCloud, name.toUtf8().constData())){
@@ -73,7 +74,7 @@ void MainWindow::displayPointCloudLeft(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud
     w1->update();
 }
 
-void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name)
+void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, QString name)
 {
     filteredCloud = cloud;
     if(!viewer2->updatePointCloud(filteredCloud, name.toUtf8().constData())){
@@ -97,6 +98,9 @@ void MainWindow::on_button_subscribe_topic_clicked(bool check)
     if(ui.comboBox->currentText().length() != 0){
 
     }
+
+
+    manipulator->extractClusters(displayCloud, 0.02);
 }
 
 void MainWindow::on_button_save_filtered_cloud_clicked(bool check)
@@ -107,7 +111,7 @@ void MainWindow::on_button_save_filtered_cloud_clicked(bool check)
     if(!fileName.endsWith(".pcd",Qt::CaseInsensitive)){
         fileName.append(".pcd");
     }
-    pcl::io::savePCDFileASCII(fileName.toUtf8().constData(), *filteredCloud);
+    pcl::io::savePCDFileBinary(fileName.toUtf8().constData(), *filteredCloud);
 }
 
 
@@ -117,7 +121,7 @@ void MainWindow::on_button_filter_clicked(bool check)
         manipulator->getNewVisualizer(ui.filter_box->currentIndex());
         changedFilter = false;
     }
-    pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     manipulator->runFilter(ui.filter_box->currentIndex(), displayCloud, tmpCloud, ui.spinBox_1->value(), ui.spinBox_2->value(), ui.spinBox_3->value(), ui.filter_XYZ->currentText());
 }
 
@@ -134,8 +138,8 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
     }
     else{
         for (int i = 0; i<fileNames.size(); i++){
-            pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::io::loadPCDFile<pcl::PointXYZ>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
             if(i == 0){
                 displayCloud = tmpCloud;
             }
@@ -152,17 +156,37 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
 
 void MainWindow::on_button_reload_cloud_clicked(bool check)
 {
-    pcl::io::savePCDFileASCII("/home/minions/tmp_cloud.pcd", *filteredCloud);
+    pcl::io::savePCDFileBinary("/home/minions/tmp_cloud.pcd", *filteredCloud);
     displayPointCloud("/home/minions/tmp_cloud.pcd", "displayCloud");
 
     ui.logBox->append(manipulator->getLastFiltered());
 
 }
 
-void MainWindow::on_button_transform_clicked(bool check)
+void MainWindow::on_button_stl_clicked(bool check)
 {
-    manipulator->translateCloud(displayCloud, ui.rotX->value(), ui.rotY->value(), ui.rotZ->value(), ui.translX->value(), ui.translY->value(), ui.translZ->value());
+    QString fileName;
+    fileName = QFileDialog::getOpenFileName(this,tr("Choose a .stl file to open"),"/home/",tr("STL File (*.stl *.STL)"));
+    filteredCloud = manipulator->sampleSTL(fileName,300,1);
+    //displayPointCloudLeft(filteredCloud, "filteredCloud");
 }
+
+void MainWindow::on_button_match_clicked(bool check)
+{
+    QString modelName;
+    modelName = QFileDialog::getOpenFileName(this,tr("Choose MODEL cloud"),"/home/",tr("PCD File (*.pcd *.PCD)"));
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr modelCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::io::loadPCDFile(modelName.toStdString(), *modelCloud);
+    QString sceneName;
+    sceneName = QFileDialog::getOpenFileName(this,tr("Choose SCENE cloud"),"/home/",tr("PCD File (*.pcd *.PCD)"));
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sceneCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::io::loadPCDFile(sceneName.toStdString(), *sceneCloud);
+
+    manipulator->matchModelCloud(modelCloud, sceneCloud);
+
+}
+
+
 
 void MainWindow::on_button_tester_clicked(bool check)
 {
@@ -176,7 +200,10 @@ void MainWindow::on_button_tester_clicked(bool check)
 
     //manipulator->alignClouds(fileNames);
 
-    manipulator->alignRobotCell(fileNames);
+    //manipulator->alignRobotCell(fileNames);
+
+    manipulator->refineAlignment(fileNames);
+    //manipulator->roflKinect(fileNames);
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)
@@ -225,37 +252,7 @@ void MainWindow::on_slider_3_valueChanged(int i)
     }
 }
 
-void MainWindow::on_srotX_valueChanged(int i)
-{
-    double d = i;
-    ui.rotX->setValue(d);
-}
-void MainWindow::on_srotY_valueChanged(int i)
-{
-    double d = i;
-    ui.rotY->setValue(d);
-}
-void MainWindow::on_srotZ_valueChanged(int i)
-{
-    double d = i;
-    ui.rotZ->setValue(d);
-}
 
-void MainWindow::on_stranslX_valueChanged(int i)
-{
-    double d = i;
-    ui.translX->setValue(d);
-}
-void MainWindow::on_stranslY_valueChanged(int i)
-{
-    double d = i;
-    ui.translY->setValue(d);
-}
-void MainWindow::on_stranslZ_valueChanged(int i)
-{
-    double d = i;
-    ui.translZ->setValue(d);
-}
 
 void MainWindow::on_spinBox_1_valueChanged(double d)
 {
@@ -275,44 +272,6 @@ void MainWindow::on_spinBox_3_valueChanged(double d)
 {
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
-    }
-}
-
-void MainWindow::on_rotX_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
-    }
-}
-void MainWindow::on_rotY_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
-    }
-}
-void MainWindow::on_rotZ_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
-    }
-}
-
-void MainWindow::on_translX_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
-    }
-}
-void MainWindow::on_translY_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
-    }
-}
-void MainWindow::on_translZ_valueChanged(double d)
-{
-    if(ui.auto_trans->isChecked()){
-        Q_EMIT on_button_transform_clicked(true);
     }
 }
 

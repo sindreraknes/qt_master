@@ -63,6 +63,13 @@
 
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/extract_clusters.h>
+
+#include <pcl/surface/vtk_smoothing/vtk_utils.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/recognition/cg/hough_3d.h>
+#include <pcl/recognition/cg/geometric_consistency.h>
 
 namespace qt_master {
 
@@ -74,14 +81,14 @@ public:
     ~PointCloudManipulator();
     // GUI FILTERS
     QStringList getFilters();
-    void runFilter(int selectedFilter,pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud,pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double d1, double d2, double d3, QString xyz);
+    void runFilter(int selectedFilter,pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud,pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double d1, double d2, double d3, QString xyz);
     void getNewIndexInfo(int selectedFilter);
-    void filterPassThrough(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double limitMin, double limitMax, QString field);
-    void filterVoxelGrid(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double leafSize);
-    void filterMedian(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud, double windowSize, double maxMovement);
-    void filterNormal(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double radius, double nrToDisplay);
-    void filterBilateral(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double sigmaS, float sigmaR);
-    void translateCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ);
+    void filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double limitMin, double limitMax, QString field);
+    void filterVoxelGrid(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double leafSize);
+    void filterMedian(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud, double windowSize, double maxMovement);
+    void filterNormal(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius, double nrToDisplay);
+    void filterBilateral(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double sigmaS, float sigmaR);
+    void translateCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double rX, double rY, double rZ, double tX, double tY, double tZ);
     void getNewVisualizer(int selectedFilter);
     QString getLastFiltered();
 
@@ -89,6 +96,10 @@ public:
     void tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointsIn2);
     void alignClouds(QStringList fileNames);
     void alignRobotCell(QStringList fileNames);
+
+    void refineAlignment(QStringList fileNames);
+
+    void roflKinect(QStringList fileNames);
     // FILTERS, KEYPOINTS, DESCRIPTORS
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterVoxel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double leafSize);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterPassThrough(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double limitMin, double limitMax, QString field);
@@ -97,7 +108,7 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterOutlier(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud);
     pcl::PointCloud<pcl::Normal>::Ptr computeSurfaceNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float radius);
     pcl::PointCloud<pcl::PointNormal>::Ptr computeSurfacePointNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input,pcl::PointCloud<pcl::PointXYZRGB>::Ptr surface, float radius);
-
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractClusters (pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, double distance);
     // KEYPOINTS
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr detectSIFTKeyPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr points, float minScale,
                                                            int nrOctaves, int nrScalesPerOctave, float minContrast);
@@ -164,29 +175,30 @@ public:
     void visualizeTransformation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr sourcePoints, pcl::PointCloud<pcl::PointXYZRGB>::Ptr targetPoints,
                                  Eigen::Matrix4f transform);
 
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sampleSTL(QString path, int resolution, int tess_level);
+    void matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene);
+
+
 Q_SIGNALS:
     void sendNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);
     void sendNewVisualizer(boost::shared_ptr<pcl::visualization::PCLVisualizer> vis);
-    void sendNewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, QString name);
+    void sendNewPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, QString name);
 
 public Q_SLOTS:
 
 private:
     QStringList filterList;
-    pcl::PassThrough<pcl::PointXYZ> passThroughFilter;
+    pcl::PassThrough<pcl::PointXYZRGB> passThroughFilter;
     pcl::PassThrough<pcl::PointXYZRGB> passThroughFilterRGB;
-    pcl::VoxelGrid<pcl::PointXYZ> voxelGridFilter;
+    pcl::VoxelGrid<pcl::PointXYZRGB> voxelGridFilter;
     pcl::VoxelGrid<pcl::PointXYZRGB> voxelGridFilterRGB;
     pcl::ShadowPoints<pcl::PointXYZRGB, pcl::Normal> shadowPointsFilter;
-    pcl::MedianFilter<pcl::PointXYZ> medianFilter;
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZ> statOutlierFilter;
-    pcl::FastBilateralFilter<pcl::PointXYZ> bilateralFilter;
+    pcl::MedianFilter<pcl::PointXYZRGB> medianFilter;
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> statOutlierFilter;
+    pcl::FastBilateralFilter<pcl::PointXYZRGB> bilateralFilter;
     boost::shared_ptr<pcl::visualization::PCLVisualizer> visualizer;
     QString lastFiltered;
-
-
-
-
 
 
 };
