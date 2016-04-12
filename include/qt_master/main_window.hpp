@@ -64,7 +64,12 @@ public Q_SLOTS:
     void on_button_stl_clicked(bool check);
     void on_button_match_clicked(bool check);
 
+    void on_button_emil_clicked(bool emil);
+
     void on_button_tester_clicked(bool check);
+
+    void on_button_plan_move_clicked(bool check);
+    void on_button_move_clicked(bool check);
     // Sliders
     // Filters
     void on_slider_1_valueChanged(int i);

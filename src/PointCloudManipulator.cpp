@@ -353,7 +353,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> PointCloudManipulator::extra
 
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
-    ec.setClusterTolerance (0.01); // 2cm
+    ec.setClusterTolerance (0.02); // 2cm = 0.02
     ec.setMinClusterSize (200);
     ec.setMaxClusterSize (25000);
     ec.setSearchMethod (tree);
@@ -572,6 +572,7 @@ Eigen::Matrix4f PointCloudManipulator::computeInitialAlignmentSHOTColor(pcl::Poi
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius)
 {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
     // Create the segmentation object
@@ -581,6 +582,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlane(pcl::
     // Mandatory
     seg.setModelType (pcl::SACMODEL_PLANE);
     seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMaxIterations(100);
     seg.setDistanceThreshold (radius);
     seg.setInputCloud (inCloud);
     seg.segment (*inliers, *coefficients);
@@ -593,7 +595,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlane(pcl::
     // Get the points associated with the planar surface
     extract.filter (*cloud_plane);
 
-    return (cloud_plane);
+    // NEW SHIT
+    extract.setNegative(true);
+    extract.filter(*cloud_no_plane);
+
+    return (cloud_no_plane);
 }
 
 PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, QString keyPoints, QString descriptors)
@@ -609,7 +615,7 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
     // Keypoints
     if(QString::compare(keyPoints, "SIFT", Qt::CaseInsensitive) == 0){
         // CONTRAST IS THE LAST PART (0.01, 3, 3, 0.2)
-        features.keyPoints = detectSIFTKeyPoints(features.points, 0.01, 3, 3, 0.0);
+        features.keyPoints = detectSIFTKeyPoints(features.points, 0.01, 15, 15, 0.0);
         std::cout << "Found SIFT keypoints: " ;
         std::cout << features.keyPoints->size() << std::endl;
     }
@@ -621,12 +627,12 @@ PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures
 
     // Descriptors
     if(QString::compare(descriptors, "FPFH", Qt::CaseInsensitive) == 0){
-        features.localDescriptorsFPFH = computeLocalDescriptorsFPFH(features.points, features.normals, features.keyPoints, 0.15);
+        features.localDescriptorsFPFH = computeLocalDescriptorsFPFH(features.points, features.normals, features.keyPoints, 0.55); //0.15
         std::cout << "Found FPFH descriptors: " ;
         std::cout << features.localDescriptorsFPFH->size() << std::endl;
     }
     else if(QString::compare(descriptors, "SHOTCOLOR", Qt::CaseInsensitive) == 0){
-        features.localDescriptorsSHOTColor = computeLocalDescriptorsSHOTColor(features.points, features.normals,features.keyPoints,0.15);
+        features.localDescriptorsSHOTColor = computeLocalDescriptorsSHOTColor(features.points, features.normals,features.keyPoints,0.55);
         std::cout << "Found SHOTColor descriptors: " ;
         std::cout << features.localDescriptorsSHOTColor->size() << std::endl;
     }
@@ -717,6 +723,15 @@ pcl::CorrespondencesPtr PointCloudManipulator::findCorrespondences(pcl::PointClo
 {
     pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
     pcl::registration::CorrespondenceEstimation<pcl::FPFHSignature33, pcl::FPFHSignature33> est;
+    est.setInputSource(sourceDescriptors);
+    est.setInputTarget(targetDescriptors);
+    est.determineCorrespondences(*correspondences);
+    return correspondences;
+}
+
+pcl::CorrespondencesPtr PointCloudManipulator::findCorrespondencesSHOT(pcl::PointCloud<pcl::SHOT1344>::Ptr sourceDescriptors, pcl::PointCloud<pcl::SHOT1344>::Ptr targetDescriptors){
+    pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
+    pcl::registration::CorrespondenceEstimation<pcl::SHOT1344, pcl::SHOT1344> est;
     est.setInputSource(sourceDescriptors);
     est.setInputTarget(targetDescriptors);
     est.determineCorrespondences(*correspondences);
@@ -889,77 +904,145 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::sampleSTL(QString 
 
 void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene)
 {
-    std::cout << model->size() << std::endl;
-    std::cout << scene->size() << std::endl;
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> sceneModels;
-//    sceneModels = extractClusters(scene, 0.02);
-//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-//    for(int i = 0; i<sceneModels.size(); i++){
-//        *tmpCloud += *sceneModels.at(i);
-//    }
-//    *scene = *tmpCloud;
-    scene = filterVoxel(scene, 0.01);
-    model = filterVoxel(model, 0.01);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr fullScene(new pcl::PointCloud<pcl::PointXYZRGB>());
+    *fullScene = *scene;
 
-    std::cout << model->size() << std::endl;
-    std::cout << scene->size() << std::endl;
-    PointCloudFeatures modelFeature = computeFeatures(model, "VOXEL", "FPFH");
-    PointCloudFeatures sceneFeature = computeFeatures(scene, "VOXEL", "FPFH");
+    //Camera to tag
+    Eigen::Matrix4f cameraToTag = Eigen::Matrix4f::Identity();
+    cameraToTag << 0.0139678,  0.998862,   0.0456047, -0.299209,
+                   0.707306,   0.0223681, -0.706554,  -0.578648,
+                  -0.70677,    0.0421254, -0.706188,   1.80034,
+                   0 ,         0,          0,          1;
+    Eigen::Matrix4f worldToTag = Eigen::Matrix4f::Identity();
+    worldToTag <<  1,  0, 0, -0.084,
+                   0,  1, 0, -0.292,
+                   0,  0, 1, 0.87,
+                   0,  0, 0, 1;
 
-//    std::vector<int> correspondences;
-//    std::vector<float> correspondenceScores;
-//    findFeatureCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH, correspondences, correspondenceScores);
-//    visualizeCorrespondences(modelFeature.points,modelFeature.keyPoints,sceneFeature.points,sceneFeature.keyPoints,correspondences,correspondenceScores,modelFeature.keyPoints->size());
-//    std::cout << "Vector<int> correspondences ALL: ";
-//    std::cout << correspondences.size() << std::endl;
+    scene = filterPassThrough(scene, -0.4, 0.4, "x");
+    scene = filterPassThrough(scene, -0.6, -0.04, "y");
+    scene = filterPassThrough(scene, 1.1, 1.8, "z");
 
-    // CORRESPONDENCE US3ING CORRESPONDENCEESTIMATION
+
+    model = filterVoxel(model, 0.005);
+    scene = filterVoxel(scene, 0.001);
+    scene = extractPlane(scene,0.02);
+
+
+    PointCloudFeatures modelFeature = computeFeatures(model, "SIFT", "SHOTCOLOR");
+    PointCloudFeatures sceneFeature = computeFeatures(scene, "SIFT", "SHOTCOLOR");
+
+
+    // CORRESPONDENCE USING CORRESPONDENCEESTIMATION
     pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
-    all_correspondences = findCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH);
+    //all_correspondences = findCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH);
+    all_correspondences = findCorrespondencesSHOT(modelFeature.localDescriptorsSHOTColor, sceneFeature.localDescriptorsSHOTColor);
     std::cout << "CorrespondenceEstimation correspondences ALL: ";
     std::cout << all_correspondences->size() << std::endl;
 
-//    // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
-//    pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
-//    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.10,1000);
-//    std::cout << "Rejected using sample consensus, new amount is : ";
-//    std::cout << corrRejectSampleConsensus->size() << std::endl;
-    visualizeCorrespondences(modelFeature.points, sceneFeature.points, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, all_correspondences);
+    // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
+    pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.10,1000);
+    std::cout << "Rejected using sample consensus, new amount is : ";
+    std::cout << corrRejectSampleConsensus->size() << std::endl;
+
+    //visualizeCorrespondences(modelFeature.keyPoints, sceneFeature.keyPoints, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
+
+    Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
+    transSVD = estimateTransformationSVD(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
+    std::cout << "Initial transformation: " << std::endl;
+    std::cout << transSVD << std::endl;
+    //visualizeTransformation(sceneFeature.points, modelFeature.points, transSVD);
 
 
 
-    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
-    std::vector<pcl::Correspondences> clustered_corrs;
-    pcl::GeometricConsistencyGrouping<pcl::PointXYZRGB, pcl::PointXYZRGB> gc_clusterer;
-    gc_clusterer.setGCSize (0.2);
-    gc_clusterer.setGCThreshold (5.0);
+    Eigen::Affine3f A;
 
-    gc_clusterer.setInputCloud (modelFeature.keyPoints);
-    gc_clusterer.setSceneCloud (sceneFeature.keyPoints);
-    gc_clusterer.setModelSceneCorrespondences (all_correspondences);
+//    float x, y, z, roll, pitch, yaw;
+//    A = B;
+//    pcl::getTranslationAndEulerAngles(A, x, y, z, roll, pitch, yaw);
+//    std::cout << "X: " << x << ", Y: " << y << ", Z: " << z << std::endl;
+//    std::cout << "Roll: " << roll*(180.0/3.14) << ", Pitch: " << pitch*(180.0/3.14) << ", yaw: " << yaw*(180.0/3.14) << std::endl;
 
-    //gc_clusterer.cluster (clustered_corrs);
-    gc_clusterer.recognize (rototranslations, clustered_corrs);
+    A = transSVD;
+    Eigen::Affine3f B2;
+    B2 = cameraToTag;
+    pcl::visualization::PCLVisualizer vis;
+    vis.addCoordinateSystem(0.2);
+    vis.addCoordinateSystem(0.4, A);
+    vis.addCoordinateSystem(0.8, B2);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (modelFeature.points, 255, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (fullScene, 0, 0, 255);
+    vis.addPointCloud(fullScene,blue, "fullScene");
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model2 (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::transformPointCloud(*modelFeature.points,*model2,transSVD);
+    vis.addPointCloud(modelFeature.points,red, "model");
+    vis.addPointCloud(model2,red,"model2");
+    vis.spin();
 
-    std::cout << "Model instances found: " << rototranslations.size () << std::endl;
-    for (size_t i = 0; i < rototranslations.size (); ++i)
-    {
-      std::cout << "\n    Instance " << i + 1 << ":" << std::endl;
-      std::cout << "        Correspondences belonging to this instance: " << clustered_corrs[i].size () << std::endl;
+    // ICP
+    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+    icp.setMaxCorrespondenceDistance(0.01);
+    icp.setMaximumIterations(1000);
+    icp.setTransformationEpsilon(1e-8 );
+    icp.setEuclideanFitnessEpsilon(0.00001);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+    Eigen::Matrix4f aids = transSVD;
+    pcl::transformPointCloud(*modelFeature.points,*tmp,aids);
+    icp.setInputSource(tmp);
+    icp.setInputTarget(sceneFeature.points);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    icp.align(*outCloud);
 
-      // Print the rotation matrix and translation vector
-      Eigen::Matrix3f rotation = rototranslations[i].block<3,3>(0, 0);
-      Eigen::Vector3f translation = rototranslations[i].block<3,1>(0, 3);
+    Eigen::Matrix4f final;
+    if(icp.hasConverged()){
+        std::cout << "Converged! \n";
 
-      printf ("\n");
-      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (0,0), rotation (0,1), rotation (0,2));
-      printf ("        R = | %6.3f %6.3f %6.3f | \n", rotation (1,0), rotation (1,1), rotation (1,2));
-      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (2,0), rotation (2,1), rotation (2,2));
-      printf ("\n");
-      printf ("        t = < %0.3f, %0.3f, %0.3f >\n", translation (0), translation (1), translation (2));
+        final = icp.getFinalTransformation();
 
-      std::cout << "rofl" << std::endl;
+        //std::cout << icp.getFinalTransformation() << std::endl;
     }
+    final = final*transSVD;
+
+    std::cout << "Final transformation: " << std::endl;
+    std::cout << final << std::endl;
+
+    Eigen::Matrix4f initialTable = cameraToTag.inverse()*transSVD;
+    std::cout << "Initial table transform: " << std::endl;
+    std::cout << initialTable << std::endl;
+    Eigen::Matrix4f finalTable = cameraToTag.inverse()*final;
+    std::cout << "Final table transform: " << std::endl;
+    std::cout << finalTable << std::endl;
+
+
+    vis.addPointCloud(tmp, "modelMoved");
+    vis.addPointCloud(outCloud, "modelRefined");
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr heihoo (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::transformPointCloud(*modelFeature.points,*heihoo,final);
+    vis.addPointCloud(heihoo, "WHAT");
+
+
+    Eigen::Matrix4f test = cameraToTag*worldToTag.inverse();
+    Eigen::Affine3f C;
+    C = test;
+    vis.addCoordinateSystem(0.5, C);
+    vis.spin();
+
+    Eigen::Matrix4f posInWorld = worldToTag*finalTable;
+    std::cout << posInWorld << std::endl;
+
+
+
+    Eigen::Affine3f finalCoordinates;
+    finalCoordinates = final;
+    visualizer.reset(new pcl::visualization::PCLVisualizer ("viewer2", false));
+    visualizer->addCoordinateSystem(0.5, B2);
+    visualizer->addCoordinateSystem(0.5, finalCoordinates);
+    visualizer->addPointCloud(fullScene, "fullScene");
+    visualizer->addPointCloud(heihoo, "model");
+
+    Q_EMIT sendNewVisualizer(visualizer);
 
 
 }
@@ -1362,24 +1445,24 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
     cameraPositions.push_back(cam0);
     Eigen::Matrix4f cam1 = Eigen::Matrix4f::Identity();
     // This is the matrix from NUC2 to table
-    cam1 <<  0.0200591,  -0.999758 , 0.0089781 ,  0.326005,
-             -0.627877, -0.0195849 , -0.778066 , -0.440615,
-              0.778054 ,0.00997016 , -0.628118 ,   1.98857,
-                     0   ,       0  ,        0  ,        1;
+    cam1 << -0.0369295,   -0.99916 , 0.0177825,   0.174928,
+            -0.592998, 0.00758757 , -0.805168  , 0.016518,
+             0.804357, -0.0402794 ,  -0.59278  , 0.945164,
+                    0,          0 ,         0   ,       1;
     cameraPositions.push_back(cam1);
     Eigen::Matrix4f cam2 = Eigen::Matrix4f::Identity();
     // This is the matrix from PC to table
-    cam2 <<  0.0267334 ,  0.999128, -0.0320873 , -0.422133,
-             0.515497 ,-0.0412804 , -0.855896 ,-0.0992842,
-            -0.856474, 0.00634012 , -0.516151 ,   1.87861,
-                    0  ,        0   ,       0   ,       1;
+    cam2 <<   -0.999718 , -0.0224201 ,-0.00776418 ,   0.604796,
+              -0.00404688 ,   0.483571  , -0.875296 ,  -0.256756,
+                0.0233787 ,  -0.875018  , -0.483525  ,   2.14104,
+                        0 ,          0    ,       0     ,      1;
     cameraPositions.push_back(cam2);
     // This is the matrix from NUC1 to table
     Eigen::Matrix4f cam3 = Eigen::Matrix4f::Identity();
-    cam3 <<    0.99921, 0.00555718 , 0.0393607  , 0.019021,
-               0.0316395  ,-0.710612 , -0.702872  ,  0.14354,
-               0.0240642 ,  0.703562 , -0.710226  ,  1.12045,
-                       0  ,        0 ,         0   ,       1;
+    cam3 << 0.0139678,  0.998862, 0.0456047, -0.299209,
+            0.707306, 0.0223681, -0.706554, -0.578648,
+            -0.70677, 0.0421254, -0.706188,   1.80034,
+                   0 ,        0,         0,         1;
 
     cameraPositions.push_back(cam3);
 
@@ -1395,28 +1478,30 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
        //     tmpCloud->points[k].b = 255;
        // }
 
+        cloudsOriginal.push_back(tmpCloud);
+        tmpCloud = filterVoxel(tmpCloud, 0.01);
+
         // ROBOT CELL
         switch(i){
         case 0:
-            tmpCloud = filterPassThrough(tmpCloud, -2.1, 2.1, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -1.0, 0.9, "y");
-            tmpCloud = filterPassThrough(tmpCloud, -0.6, 3.5, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.39, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.1, -0.1, "y");
+            //tmpCloud = filterPassThrough(tmpCloud, -0.6, 3.5, "z");
             break;
         case 1:
-            tmpCloud = filterPassThrough(tmpCloud, -1.3, 1.5, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -1.7, 0.9, "y");
-            tmpCloud = filterPassThrough(tmpCloud, 0.7, 4.7, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.3, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.7, 0.3, "y");
+            //tmpCloud = filterPassThrough(tmpCloud, 0.7, 4.7, "z");
             break;
         case 2:
-            tmpCloud = filterPassThrough(tmpCloud, -1.6, 1.0, "x");
-            tmpCloud = filterPassThrough(tmpCloud, -1.6, 1.0, "y");
-            tmpCloud = filterPassThrough(tmpCloud, -1.3, 5.0, "z");
+            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.39, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.1, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 0.8, 3.1, "z");
             break;
         }
 
-        cloudsOriginal.push_back(tmpCloud);
-        tmpCloud = filterVoxel(tmpCloud, 0.01); //0.005
-        //tmpCloud = extractPlane(tmpCloud, 0.1);
+        tmpCloud = filterVoxel(tmpCloud, 0.001);
+        tmpCloud = extractPlane(tmpCloud,0.02);
 
         clouds.push_back(tmpCloud);
 
@@ -1428,10 +1513,8 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
 
     pcl::visualization::PCLVisualizer vis1;
     for(int i=0; i<clouds.size(); i++){
-        //pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
         QString s = "cloud";
         s.append(QString::number(i));
-        //pcl::transformPointCloud(*originalClouds.at(i),*tmp,cameraPositions.at(i));
         vis1.addPointCloud(clouds.at(i),s.toStdString());
     }
     vis1.spin();
@@ -1439,7 +1522,9 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
 
     pcl::visualization::PCLVisualizer vis2;
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> roughClouds;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr initAlignedSave (new pcl::PointCloud<pcl::PointXYZRGB>());
     roughClouds.push_back(clouds.at(0));
+    *initAlignedSave = *cloudsOriginal.at(0);
     std::vector<Eigen::Matrix4f> cameraPositions2;
     Eigen::Matrix4f tmp = Eigen::Matrix4f::Identity();
     cameraPositions2.push_back(tmp);
@@ -1455,12 +1540,17 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
         pcl::transformPointCloud(*clouds.at(i),*tmp,final);
         roughClouds.push_back(tmp);
         vis2.addPointCloud(tmp,s.toStdString());
+
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp2 (new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::transformPointCloud(*cloudsOriginal.at(i), *tmp2, final);
+        *initAlignedSave += *tmp2;
     }
+    pcl::io::savePCDFileBinary("/home/minions/initialAlignedWithObject.pcd", *initAlignedSave);
     vis2.spin();
 
 
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-    icp.setMaxCorrespondenceDistance(0.007); // 0.05
+    icp.setMaxCorrespondenceDistance(0.03); // 0.05
     icp.setMaximumIterations(1000);
     icp.setTransformationEpsilon(1e-10);
     icp.setEuclideanFitnessEpsilon(0.0000001);
@@ -1509,17 +1599,17 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
     vis4.spin();
 
 
-    std::ofstream file("/home/minions/alignedMatrices.txt");
-    if (file.is_open())
-    {
-        file << "Matrix for: " << "NUC1" << '\n';
-        file << cameraPositions2.at(0) << '\n' << '\n';
-        file << "Matrix for: " << "NUC2" << '\n';
-        file << cameraPositions2.at(1) << '\n' << '\n';
-        file << "Matrix for: " << "PC" << '\n';
-        file << cameraPositions2.at(2) << '\n' << '\n';
+//    std::ofstream file("/home/minions/alignedMatrices.txt");
+//    if (file.is_open())
+//    {
+//        file << "Matrix for: " << "NUC1" << '\n';
+//        file << cameraPositions2.at(0) << '\n' << '\n';
+//        file << "Matrix for: " << "NUC2" << '\n';
+//        file << cameraPositions2.at(1) << '\n' << '\n';
+//        file << "Matrix for: " << "PC" << '\n';
+//        file << cameraPositions2.at(2) << '\n' << '\n';
 
-    }
+//    }
 
     pcl::io::savePCDFileBinary("/home/minions/alignedWithObject.pcd", *writeToFileCloud);
 

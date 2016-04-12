@@ -21,7 +21,7 @@ using namespace Qt;
 
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	: QMainWindow(parent)
-	, qnode(argc,argv)
+    , qnode(argc,argv)
 {
     qRegisterMetaType<boost::shared_ptr<pcl::visualization::PCLVisualizer> >("boost::shared_ptr<pcl::visualization::PCLVisualizer>");
     // Initialize UI
@@ -130,11 +130,22 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
     QStringList fileNames;
     fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/",tr("PointClouds (*.pcd *.PCD)"));
     if(ui.check_RGB->isChecked()){
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *tmpCloud);
-        pcl::visualization::PCLVisualizer vis;
-        vis.addPointCloud(tmpCloud, "tmp");
-        vis.spin();
+        std::vector<float> zValues(217088);
+        for (int i = 0; i<fileNames.size(); i++){
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(i).toUtf8().constData(), *tmpCloud);
+            std::cout << tmpCloud->points.size() << std::endl;
+            for(int k=0; k<tmpCloud->points.size(); k++){
+                zValues[k] += tmpCloud->points[k].z*(1.0/fileNames.size());
+            }
+            if(i == fileNames.size()-1){
+                for(int k=0; k<tmpCloud->points.size(); k++){
+                    tmpCloud->points[k].z = zValues[k];
+                    displayCloud = tmpCloud;
+                }
+            }
+        }
+        displayPointCloudLeft(displayCloud, "displayCloud");
     }
     else{
         for (int i = 0; i<fileNames.size(); i++){
@@ -145,6 +156,7 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
             }
             else{
                 std::cout << i << std::endl;
+                std::cout << tmpCloud->size() << std::endl;
                 *displayCloud += *tmpCloud;
             }
         }
@@ -169,6 +181,7 @@ void MainWindow::on_button_stl_clicked(bool check)
     fileName = QFileDialog::getOpenFileName(this,tr("Choose a .stl file to open"),"/home/",tr("STL File (*.stl *.STL)"));
     filteredCloud = manipulator->sampleSTL(fileName,300,1);
     //displayPointCloudLeft(filteredCloud, "filteredCloud");
+
 }
 
 void MainWindow::on_button_match_clicked(bool check)
@@ -183,6 +196,35 @@ void MainWindow::on_button_match_clicked(bool check)
     pcl::io::loadPCDFile(sceneName.toStdString(), *sceneCloud);
 
     manipulator->matchModelCloud(modelCloud, sceneCloud);
+
+}
+
+void MainWindow::on_button_emil_clicked(bool emil)
+{
+    QString modelName;
+    modelName = QFileDialog::getOpenFileName(this,tr("Choose MODEL cloud"),"/home/",tr("PCD File (*.pcd *.PCD)"));
+    pcl::PointCloud<pcl::PointXYZ>::Ptr modelCloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile(modelName.toStdString(), *modelCloud);
+
+    pcl::PolygonMesh mesh;
+
+    Eigen::Matrix4f scaleMatrix = Eigen::Matrix4f::Identity();
+    scaleMatrix(0,0)=1000.0f;
+    scaleMatrix(1,1)=1000.0f;
+    scaleMatrix(2,2)=1000.0f;
+
+    pcl::transformPointCloud(*modelCloud,*modelCloud,scaleMatrix);
+
+    pcl::visualization::PCLVisualizer vis;
+    vis.addPointCloud(modelCloud, "rofl");
+    vis.spin();
+
+    pcl::toPCLPointCloud2(*modelCloud, mesh.cloud);
+
+    std::cout << mesh.polygons.size() << std::endl;
+
+
+    pcl::io::savePolygonFileSTL("/home/minions/tilEmil.stl", mesh);
 
 }
 
@@ -204,6 +246,34 @@ void MainWindow::on_button_tester_clicked(bool check)
 
     manipulator->refineAlignment(fileNames);
     //manipulator->roflKinect(fileNames);
+}
+
+void MainWindow::on_button_plan_move_clicked(bool check)
+{
+    if(ui.robot_selector->currentIndex() == 0){
+        // Agilus1
+        std::cout << "SUPPOSED TO PLAN AG1" << std::endl;
+        qnode.planPose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),0);
+    }
+    else if(ui.robot_selector->currentIndex() == 1){
+        // Agilus2
+        std::cout << "SUPPOSED TO PLAN AG2" << std::endl;
+        qnode.planPose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),1);
+    }
+
+}
+
+void MainWindow::on_button_move_clicked(bool check)
+{
+
+    if(ui.robot_selector->currentIndex() == 0){
+        // Agilus1
+        qnode.movePose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),0);
+    }
+    else if(ui.robot_selector->currentIndex() == 1){
+        // Agilus2
+        qnode.movePose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),1);
+    }
 }
 
 void MainWindow::on_slider_1_valueChanged(int i)

@@ -48,7 +48,13 @@ bool QNode::init() {
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle n;
 	// Add your ros communications here.
-	chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
+    planAg1 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag1/plan_pose");
+    moveAg1 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag1/go_to_pose");
+    planAg2 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag2/plan_pose");
+    moveAg2 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag2/go_to_pose");
+    gripperAg1 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag1/kuka_rsi_hw_interface/write_8_digital_outputs");
+    gripperAg2 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag2/kuka_rsi_hw_interface/write_8_digital_outputs");
+
 	start();
 
 	return true;
@@ -63,9 +69,7 @@ void QNode::run() {
 
 		std_msgs::String msg;
 		std::stringstream ss;
-		ss << "hello world " << count;
-		msg.data = ss.str();
-        chatter_publisher.publish(msg);
+
 		ros::spinOnce();
 		loop_rate.sleep();
 		++count;
@@ -99,6 +103,84 @@ void QNode::subscribeToPointCloud2(QString string)
     ros::NodeHandle n;
     const char *tmp = string.toUtf8().constData();
     pointCloud2Sub = n.subscribe<sensor_msgs::PointCloud2, QNode>(tmp, 10, &QNode::cloudCallback, this);
+}
+
+void QNode::setPose(double x, double y, double z, double roll, double pitch, double yaw)
+{
+    pose.request.header.frame_id = "/world";
+    pose.request.set_position = true;
+    pose.request.set_orientation = true;
+    pose.request.position_x = x;
+    pose.request.position_y = y;
+    pose.request.position_z = z;
+    pose.request.orientation_r = roll*M_PI/180.0;
+    pose.request.orientation_p = pitch*M_PI/180.0;
+    pose.request.orientation_y = yaw*M_PI/180.0;
+
+}
+
+void QNode::planPose(double x, double y, double z, double roll, double pitch, double yaw, int robot)
+{
+    setPose(x,y,z,roll,pitch,yaw);
+    if(robot == 0){
+        //Agilus1
+        planAg1.call(pose);
+    }
+    else if(robot == 1){
+        //Agilus2
+        planAg2.call(pose);
+    }
+}
+
+void QNode::movePose(double x, double y, double z, double roll, double pitch, double yaw, int robot)
+{
+    setPose(x,y,z,roll,pitch,yaw);
+    if(robot == 0){
+        //Agilus1
+        moveAg1.call(pose);
+    }
+    else if(robot == 1){
+        //Agilus2
+        moveAg2.call(pose);
+    }
+}
+
+void QNode::openAg1()
+{
+    gripperState.request.out1 = false;
+    gripperState.request.out4 = true;
+    // Tool changer
+    gripperState.request.out2 = true;
+
+    gripperAg1.call(gripperState);
+}
+
+void QNode::closeAg1()
+{
+    gripperState.request.out1 = true;
+    gripperState.request.out4 = false;
+    // Tool changer
+    gripperState.request.out2 = true;
+
+    gripperAg1.call(gripperState);
+}
+
+void QNode::openAg2()
+{
+    gripperState.request.out1 = false;
+    gripperState.request.out4 = true;
+    // Tool changer
+    gripperState.request.out2 = true;
+    gripperAg2.call(gripperState);
+}
+
+void QNode::closeAg2()
+{
+    gripperState.request.out1 = true;
+    gripperState.request.out4 = false;
+    // Tool changer
+    gripperState.request.out2 = true;
+    gripperAg2.call(gripperState);
 }
 
 void QNode::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
