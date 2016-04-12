@@ -52,6 +52,9 @@ public:
     void setPose(double x, double y, double z, double roll, double pitch, double yaw);
     void planPose(double x, double y, double z, double roll, double pitch, double yaw, int robot);
     void movePose(double x, double y, double z, double roll, double pitch, double yaw, int robot);
+    void openGripper(int robot);
+    void closeGripper(int robot);
+
 
 Q_SIGNALS:
     void rosShutdown();

@@ -151,8 +151,14 @@ void QNode::openAg1()
     gripperState.request.out4 = true;
     // Tool changer
     gripperState.request.out2 = true;
-
-    gripperAg1.call(gripperState);
+    if(robot == 0){
+        //Agilus1
+        gripperAg1.call(gripperState);
+    }
+    else if(robot == 1){
+        //Agilus2
+        gripperAg2.call(gripperState);
+    }
 }
 
 void QNode::closeAg1()
@@ -162,26 +168,16 @@ void QNode::closeAg1()
     // Tool changer
     gripperState.request.out2 = true;
 
-    gripperAg1.call(gripperState);
+    if(robot == 0){
+        //Agilus1
+        gripperAg1.call(gripperState);
+    }
+    else if(robot == 1){
+        //Agilus2
+        gripperAg2.call(gripperState);
+    }
 }
 
-void QNode::openAg2()
-{
-    gripperState.request.out1 = false;
-    gripperState.request.out4 = true;
-    // Tool changer
-    gripperState.request.out2 = true;
-    gripperAg2.call(gripperState);
-}
-
-void QNode::closeAg2()
-{
-    gripperState.request.out1 = true;
-    gripperState.request.out4 = false;
-    // Tool changer
-    gripperState.request.out2 = true;
-    gripperAg2.call(gripperState);
-}
 
 void QNode::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
         // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))

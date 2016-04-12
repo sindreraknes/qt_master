@@ -63,6 +63,8 @@ public Q_SLOTS:
     void on_button_reload_cloud_clicked(bool check);
     void on_button_stl_clicked(bool check);
     void on_button_match_clicked(bool check);
+    void on_button_open_gripper_clicked(bool check);
+    void on_button_close_gripper_clicked(bool check);
 
     void on_button_emil_clicked(bool emil);
 

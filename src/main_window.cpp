@@ -199,6 +199,30 @@ void MainWindow::on_button_match_clicked(bool check)
 
 }
 
+void MainWindow::on_button_open_gripper_clicked(bool check)
+{
+    if(ui.robot_selector->currentIndex() == 0){
+        // Agilus1
+        qnode.openGripper(0);
+    }
+    else if(ui.robot_selector->currentIndex() == 1){
+        // Agilus2
+        qnode.openGripper(1);
+    }
+}
+
+void MainWindow::on_button_close_gripper_clicked(bool check)
+{
+    if(ui.robot_selector->currentIndex() == 0){
+        // Agilus1
+        qnode.closeGripper(0);
+    }
+    else if(ui.robot_selector->currentIndex() == 1){
+        // Agilus2
+        qnode.closeGripper(1);
+    }
+}
+
 void MainWindow::on_button_emil_clicked(bool emil)
 {
     QString modelName;
