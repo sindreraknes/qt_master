@@ -52,8 +52,8 @@ bool QNode::init() {
     moveAg1 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag1/go_to_pose");
     planAg2 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag2/plan_pose");
     moveAg2 = n.serviceClient<agilus_planner::Pose>("/robot_service_ag2/go_to_pose");
-    gripperAg1 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag1/kuka_rsi_hw_interface/write_8_digital_outputs");
-    gripperAg2 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag2/kuka_rsi_hw_interface/write_8_digital_outputs");
+    gripperAg1 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag1/kuka_hardware_interface/write_8_digital_outputs");
+    gripperAg2 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag2/kuka_hardware_interface/write_8_digital_outputs");
 
 	start();
 
@@ -145,7 +145,7 @@ void QNode::movePose(double x, double y, double z, double roll, double pitch, do
     }
 }
 
-void QNode::openAg1()
+void QNode::openGripper(int robot)
 {
     gripperState.request.out1 = false;
     gripperState.request.out4 = true;
@@ -161,7 +161,7 @@ void QNode::openAg1()
     }
 }
 
-void QNode::closeAg1()
+void QNode::closeGripper(int robot)
 {
     gripperState.request.out1 = true;
     gripperState.request.out4 = false;
