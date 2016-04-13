@@ -909,10 +909,14 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
     //Camera to tag
     Eigen::Matrix4f cameraToTag = Eigen::Matrix4f::Identity();
-    cameraToTag << 0.0139678,  0.998862,   0.0456047, -0.299209,
-                   0.707306,   0.0223681, -0.706554,  -0.578648,
-                  -0.70677,    0.0421254, -0.706188,   1.80034,
-                   0 ,         0,          0,          1;
+//    cameraToTag << 0.0139678,  0.998862,   0.0456047, -0.299209,
+//                   0.707306,   0.0223681, -0.706554,  -0.578648,
+//                  -0.70677,    0.0421254, -0.706188,   1.80034,
+//                   0 ,         0,          0,          1;
+    cameraToTag << -0.0324064,   0.999472, 0.00236665,  -0.236723,
+                   0.701194,  0.0244224,  -0.712552,  -0.589319,
+                  -0.712233, -0.0214317,  -0.701615,    1.82195,
+                          0,          0,          0,          1;
     Eigen::Matrix4f worldToTag = Eigen::Matrix4f::Identity();
     worldToTag <<  1,  0, 0, -0.084,
                    0,  1, 0, -0.292,
@@ -942,7 +946,7 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
     // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
     pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
-    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.10,1000);
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.02,1000); //Was 0.10, 0.07, 0.05
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
 
@@ -953,6 +957,12 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     std::cout << "Initial transformation: " << std::endl;
     std::cout << transSVD << std::endl;
     //visualizeTransformation(sceneFeature.points, modelFeature.points, transSVD);
+
+//    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity ();
+//    transLM = estimateTransformationLM(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
+//    std::cout << "Initial transformation: " << std::endl;
+//    std::cout << transLM << std::endl;
+//    visualizeTransformation(sceneFeature.points, modelFeature.points, transLM);
 
 
 
@@ -1459,10 +1469,10 @@ void PointCloudManipulator::refineAlignment(QStringList fileNames)
     cameraPositions.push_back(cam2);
     // This is the matrix from NUC1 to table
     Eigen::Matrix4f cam3 = Eigen::Matrix4f::Identity();
-    cam3 << 0.0139678,  0.998862, 0.0456047, -0.299209,
-            0.707306, 0.0223681, -0.706554, -0.578648,
-            -0.70677, 0.0421254, -0.706188,   1.80034,
-                   0 ,        0,         0,         1;
+    cam3 << -0.0324064,   0.999472, 0.00236665,  -0.236723,
+            0.701194,  0.0244224,  -0.712552,  -0.589319,
+           -0.712233, -0.0214317,  -0.701615,    1.82195,
+                   0,          0,          0,          1;
 
     cameraPositions.push_back(cam3);
 

@@ -223,34 +223,7 @@ void MainWindow::on_button_close_gripper_clicked(bool check)
     }
 }
 
-void MainWindow::on_button_emil_clicked(bool emil)
-{
-    QString modelName;
-    modelName = QFileDialog::getOpenFileName(this,tr("Choose MODEL cloud"),"/home/",tr("PCD File (*.pcd *.PCD)"));
-    pcl::PointCloud<pcl::PointXYZ>::Ptr modelCloud (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::io::loadPCDFile(modelName.toStdString(), *modelCloud);
 
-    pcl::PolygonMesh mesh;
-
-    Eigen::Matrix4f scaleMatrix = Eigen::Matrix4f::Identity();
-    scaleMatrix(0,0)=1000.0f;
-    scaleMatrix(1,1)=1000.0f;
-    scaleMatrix(2,2)=1000.0f;
-
-    pcl::transformPointCloud(*modelCloud,*modelCloud,scaleMatrix);
-
-    pcl::visualization::PCLVisualizer vis;
-    vis.addPointCloud(modelCloud, "rofl");
-    vis.spin();
-
-    pcl::toPCLPointCloud2(*modelCloud, mesh.cloud);
-
-    std::cout << mesh.polygons.size() << std::endl;
-
-
-    pcl::io::savePolygonFileSTL("/home/minions/tilEmil.stl", mesh);
-
-}
 
 
 
@@ -258,10 +231,10 @@ void MainWindow::on_button_tester_clicked(bool check)
 {
     QStringList fileNames;
     fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/minions/Downloads/",tr("PointClouds (*.pcd *.PCD)"));
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *cloud1);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *cloud1);
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
     //manipulator->tester2(cloud1, cloud2);
 
     //manipulator->alignClouds(fileNames);
