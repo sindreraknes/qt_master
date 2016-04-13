@@ -181,6 +181,9 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr sampleSTL(QString path, int resolution, int tess_level);
     void matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene);
 
+    void alignAndMatch(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr alignCloudsRefined(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloudsIn);
+
 
 Q_SIGNALS:
     void sendNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);

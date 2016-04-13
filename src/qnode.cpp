@@ -28,9 +28,10 @@ namespace qt_master {
 *****************************************************************************/
 
 QNode::QNode(int argc, char** argv ) :
-	init_argc(argc),
-	init_argv(argv)
-	{}
+    init_argc(argc),
+    init_argv(argv)
+{
+}
 
 QNode::~QNode() {
     if(ros::isStarted()) {
@@ -55,6 +56,10 @@ bool QNode::init() {
     gripperAg1 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag1/kuka_hardware_interface/write_8_digital_outputs");
     gripperAg2 = n.serviceClient<kuka_rsi_hw_interface::write_8_outputs>("/ag2/kuka_hardware_interface/write_8_digital_outputs");
 
+    gotCloud1 = false;
+    gotCloud2 = false;
+    gotCloud3 = false;
+
 	start();
 
 	return true;
@@ -63,12 +68,20 @@ bool QNode::init() {
 
 
 void QNode::run() {
-	ros::Rate loop_rate(1);
+    ros::Rate loop_rate(10);
 	int count = 0;
 	while ( ros::ok() ) {
 
-		std_msgs::String msg;
-		std::stringstream ss;
+        if(gotCloud1 && gotCloud2 && gotCloud3){
+            std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds;
+            clouds.push_back(cloud1);
+            clouds.push_back(cloud2);
+            clouds.push_back(cloud3);
+            Q_EMIT send3Clouds(clouds);
+            pointCloudSub1.shutdown();
+            pointCloudSub2.shutdown();
+            pointCloudSub3.shutdown();
+        }
 
 		ros::spinOnce();
 		loop_rate.sleep();
@@ -89,21 +102,14 @@ QStringList QNode::getTopics()
         const ros::master::TopicInfo& info = *it;
         //std::cout << "Topic : " << it - master_topics.begin() << ": " << info.name << " -> " << info.datatype <<       std::endl;
         tmp = QString::fromUtf8(info.datatype.c_str());
-
         // Add more types if needed
-        //if(QString::compare(tmp, "sensor_msgs/PointCloud2", Qt::CaseInsensitive) == 0){
+        if(QString::compare(tmp, "sensor_msgs/PointCloud2", Qt::CaseInsensitive) == 0){
             list.append(QString::fromUtf8(info.name.c_str()));
-       // }
+        }
     }
     return list;
 }
 
-void QNode::subscribeToPointCloud2(QString string)
-{
-    ros::NodeHandle n;
-    const char *tmp = string.toUtf8().constData();
-    pointCloud2Sub = n.subscribe<sensor_msgs::PointCloud2, QNode>(tmp, 10, &QNode::cloudCallback, this);
-}
 
 void QNode::setPose(double x, double y, double z, double roll, double pitch, double yaw)
 {
@@ -178,18 +184,29 @@ void QNode::closeGripper(int robot)
     }
 }
 
+void QNode::subscribe3Clouds()
+{
+    ros::NodeHandle n;
+    pointCloudSub1 = n.subscribe<sensor_msgs::PointCloud2, QNode>("/NUC1/sd/points", 10, &QNode::cloudCallback1, this);
+    pointCloudSub2 = n.subscribe<sensor_msgs::PointCloud2, QNode>("/NUC2/sd/points", 10, &QNode::cloudCallback2, this);
+    pointCloudSub3 = n.subscribe<sensor_msgs::PointCloud2, QNode>("/PC/sd/points", 10, &QNode::cloudCallback3, this);
+}
 
-void QNode::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
+
+void QNode::cloudCallback1(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
         // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
-        pcl::fromROSMsg(*cloud_msg, cloud);
-
-
-        // Cloud conversion and visualization
-        pcl::PointCloud<pcl::PointXYZ>::Ptr tmpCloud(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromROSMsg(*cloud_msg, *tmpCloud);
-        //picture_flag = true;
-       // Q_EMIT setPointCloud(tmpCloud);
-
+        pcl::fromROSMsg(*cloud_msg, *cloud1);
+        gotCloud1 = true;
+}
+void QNode::cloudCallback2(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
+        // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
+        pcl::fromROSMsg(*cloud_msg, *cloud2);
+        gotCloud2 = true;
+}
+void QNode::cloudCallback3(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
+        // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
+        pcl::fromROSMsg(*cloud_msg, *cloud3);
+        gotCloud3 = true;
 }
 
 

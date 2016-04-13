@@ -65,6 +65,7 @@ public Q_SLOTS:
     void on_button_match_clicked(bool check);
     void on_button_open_gripper_clicked(bool check);
     void on_button_close_gripper_clicked(bool check);
+    void on_button_align_match_clicked(bool check);
 
 
     void on_button_tester_clicked(bool check);
@@ -90,6 +91,7 @@ public Q_SLOTS:
     void setNewIndexInfo(QStringList labels, QList<bool> show, QList<double> stepsAndRange);
     void setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer> vis);
     void displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, QString name);
+    void receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds);
 
 Q_SIGNALS:
 

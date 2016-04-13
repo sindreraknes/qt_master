@@ -35,6 +35,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     // Manipulator / Filter
     manipulator = new PointCloudManipulator();
+    QObject::connect(&qnode, SIGNAL(send3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>)), this, SLOT(receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>)));
     QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>, QList<double>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>, QList<double>)));
     QObject::connect(manipulator, SIGNAL(sendNewVisualizer(boost::shared_ptr<pcl::visualization::PCLVisualizer>)), this, SLOT(setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer>)));
     QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)));
@@ -81,6 +82,20 @@ void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
         viewer2->addPointCloud(filteredCloud, name.toUtf8().constData());
     }
     w2->update();
+}
+
+void MainWindow::receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds)
+{
+    // ADD SELECTED MODEL TO THE CLOUDS VECTOR BEFORE SENDING
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model (new pcl::PointCloud<pcl::PointXYZRGB>());
+    std::string path = ros::package::getPath("qt_master");
+    path.append("/models/");
+    QString tmp = ui.modelList->currentText();
+    path.append(tmp.toStdString());
+    pcl::io::loadPCDFile<pcl::PointXYZRGB>(path, *model);
+    clouds.push_back(model);
+
+    manipulator->alignAndMatch(clouds);
 }
 
 
@@ -221,6 +236,11 @@ void MainWindow::on_button_close_gripper_clicked(bool check)
         // Agilus2
         qnode.closeGripper(1);
     }
+}
+
+void MainWindow::on_button_align_match_clicked(bool check)
+{
+    qnode.subscribe3Clouds();
 }
 
 
@@ -412,6 +432,15 @@ void MainWindow::initializeUI()
     xyz.append("y");
     xyz.append("z");
     ui.filter_XYZ->addItems(xyz);
+
+    QStringList models;
+    models.append("boxHole");
+    models.append("boxHoleSide");
+    models.append("boxHoleUp");
+    models.append("SOMETHING MORE");
+
+
+
 }
 
 }  // namespace qt_master

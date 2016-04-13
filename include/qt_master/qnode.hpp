@@ -46,25 +46,38 @@ public:
 	virtual ~QNode();
     bool init();
 	void run();
-    void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+    void cloudCallback1(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+    void cloudCallback2(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+    void cloudCallback3(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
     QStringList getTopics();
-    void subscribeToPointCloud2(QString string);
     void setPose(double x, double y, double z, double roll, double pitch, double yaw);
     void planPose(double x, double y, double z, double roll, double pitch, double yaw, int robot);
     void movePose(double x, double y, double z, double roll, double pitch, double yaw, int robot);
     void openGripper(int robot);
     void closeGripper(int robot);
+    void subscribe3Clouds();
 
 
 Q_SIGNALS:
     void rosShutdown();
+    void send3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds);
+
+public Q_SLOTS:
+
 
 private:
 	int init_argc;
 	char** init_argv;
 	ros::Publisher chatter_publisher;
-    ros::Subscriber pointCloud2Sub;
-    pcl::PointCloud<pcl::PointXYZ> cloud;
+    ros::Subscriber pointCloudSub1;
+    ros::Subscriber pointCloudSub2;
+    ros::Subscriber pointCloudSub3;
+    bool gotCloud1;
+    bool gotCloud2;
+    bool gotCloud3;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud3;
     agilus_planner::Pose pose;
     ros::ServiceClient planAg1;
     ros::ServiceClient moveAg1;

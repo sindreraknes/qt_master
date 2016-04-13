@@ -1057,6 +1057,131 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
 }
 
+void PointCloudManipulator::alignAndMatch(std::vector<pcl::PointCloud::Ptr> clouds)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene(new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model(new pcl::PointCloud<pcl::PointXYZRGB>());
+    // this might fail during compilation
+    scene = alignCloudsRefined(clouds);
+    *model = clouds.at(clouds.size());
+
+
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::alignCloudsRefined(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloudsIn)
+{
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloudsOriginal;
+
+    std::vector<Eigen::Matrix4f> cameraPositions;
+    Eigen::Matrix4f cam0 = Eigen::Matrix4f::Identity();
+    cameraPositions.push_back(cam0);
+    Eigen::Matrix4f cam1 = Eigen::Matrix4f::Identity();
+    // This is the matrix from NUC2 to table
+    cam1 << -0.0369295,   -0.99916 , 0.0177825,   0.174928,
+            -0.592998, 0.00758757 , -0.805168  , 0.016518,
+             0.804357, -0.0402794 ,  -0.59278  , 0.945164,
+                    0,          0 ,         0   ,       1;
+    cameraPositions.push_back(cam1);
+    Eigen::Matrix4f cam2 = Eigen::Matrix4f::Identity();
+    // This is the matrix from PC to table
+    cam2 <<   -0.999718 , -0.0224201 ,-0.00776418 ,   0.604796,
+              -0.00404688 ,   0.483571  , -0.875296 ,  -0.256756,
+                0.0233787 ,  -0.875018  , -0.483525  ,   2.14104,
+                        0 ,          0    ,       0     ,      1;
+    cameraPositions.push_back(cam2);
+    // This is the matrix from NUC1 to table
+    Eigen::Matrix4f cam3 = Eigen::Matrix4f::Identity();
+    cam3 << -0.0324064,   0.999472, 0.00236665,  -0.236723,
+            0.701194,  0.0244224,  -0.712552,  -0.589319,
+           -0.712233, -0.0214317,  -0.701615,    1.82195,
+                   0,          0,          0,          1;
+
+    cameraPositions.push_back(cam3);
+
+
+    for(int i = 0; i<cloudsIn.size()-1; i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        *tmpCloud = *clouds.at(i);
+
+
+        cloudsOriginal.push_back(tmpCloud);
+        tmpCloud = filterVoxel(tmpCloud, 0.01);
+
+        // ROBOT CELL
+        switch(i){
+        case 0:
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.39, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -1.1, -0.1, "y");
+            //tmpCloud = filterPassThrough(tmpCloud, -0.6, 3.5, "z");
+            break;
+        case 1:
+            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.3, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.7, 0.3, "y");
+            //tmpCloud = filterPassThrough(tmpCloud, 0.7, 4.7, "z");
+            break;
+        case 2:
+            tmpCloud = filterPassThrough(tmpCloud, -0.5, 0.39, "x");
+            tmpCloud = filterPassThrough(tmpCloud, -0.4, 0.1, "y");
+            tmpCloud = filterPassThrough(tmpCloud, 0.8, 3.1, "z");
+            break;
+        }
+
+        tmpCloud = filterVoxel(tmpCloud, 0.001);
+        tmpCloud = extractPlane(tmpCloud,0.02);
+
+        clouds.push_back(tmpCloud);
+    }
+
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> roughClouds;
+    roughClouds.push_back(clouds.at(0));
+    std::vector<Eigen::Matrix4f> cameraPositions2;
+    Eigen::Matrix4f tmp = Eigen::Matrix4f::Identity();
+    cameraPositions2.push_back(tmp);
+    for(int i=1; i<clouds.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        Eigen::Matrix4f tmpMat2 = cameraPositions.at(i);
+        Eigen::Matrix4f tmpMat3 = cameraPositions.at(3);
+        Eigen::Matrix4f final = tmpMat3*tmpMat2.inverse();
+        cameraPositions2.push_back(final);
+        pcl::transformPointCloud(*clouds.at(i),*tmp,final);
+        roughClouds.push_back(tmp);
+    }
+
+
+    pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+    icp.setMaxCorrespondenceDistance(0.03); // 0.05
+    icp.setMaximumIterations(1000);
+    icp.setTransformationEpsilon(1e-10);
+    icp.setEuclideanFitnessEpsilon(0.0000001);
+    icp.setInputTarget(roughClouds.at(0));
+
+    for(int i=1; i<roughClouds.size(); i++){
+        icp.setInputSource(roughClouds.at(i));
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr outCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+        icp.align(*outCloud);
+        Eigen::Matrix4f transICP = Eigen::Matrix4f::Identity();
+        if(icp.hasConverged()){
+            std::cout << "Converged! ";
+            std::cout << i << std::endl;
+            transICP = icp.getFinalTransformation();
+            cameraPositions2[i] = transICP*cameraPositions2[i];
+
+        }
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr writeToFileCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+    for(int i=0; i<roughClouds.size(); i++){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::transformPointCloud(*cloudsOriginal[i], *tmp, cameraPositions2[i]);
+        *writeToFileCloud += *tmp;
+    }
+
+    pcl::io::savePCDFileBinary("/home/minions/alignedWithObject.pcd", *writeToFileCloud);
+
+    return (writeToFileCloud);
+}
+
 
 void PointCloudManipulator::tester2(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn1, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn2)
 {
