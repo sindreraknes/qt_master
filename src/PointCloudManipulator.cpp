@@ -946,7 +946,7 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
     // CORRESPONDENCE REJECTION USING SAMPLE CONSENSUS
     pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
-    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.02,1000); //Was 0.10, 0.07, 0.05
+    corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,modelFeature.keyPoints,sceneFeature.keyPoints,0.03,1000); //Was 0.10, 0.07, 0.05
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
 
