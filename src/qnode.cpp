@@ -29,8 +29,12 @@ namespace qt_master {
 
 QNode::QNode(int argc, char** argv ) :
     init_argc(argc),
-    init_argv(argv)
+    init_argv(argv),
+    cloud1(new pcl::PointCloud<pcl::PointXYZRGB>()),
+    cloud2(new pcl::PointCloud<pcl::PointXYZRGB>()),
+    cloud3(new pcl::PointCloud<pcl::PointXYZRGB>())
 {
+
 }
 
 QNode::~QNode() {
@@ -81,6 +85,10 @@ void QNode::run() {
             pointCloudSub1.shutdown();
             pointCloudSub2.shutdown();
             pointCloudSub3.shutdown();
+            std::cout << "Done taking pictures" << std::endl;
+            gotCloud1 = false;
+            gotCloud2 = false;
+            gotCloud3 = false;
         }
 
 		ros::spinOnce();
@@ -194,19 +202,25 @@ void QNode::subscribe3Clouds()
 
 
 void QNode::cloudCallback1(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
-        // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
-        pcl::fromROSMsg(*cloud_msg, *cloud1);
-        gotCloud1 = true;
+    // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::fromROSMsg(*cloud_msg, *tmp);
+    pcl::copyPointCloud(*tmp, *cloud1);
+    gotCloud1 = true;
 }
 void QNode::cloudCallback2(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
-        // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
-        pcl::fromROSMsg(*cloud_msg, *cloud2);
-        gotCloud2 = true;
+    // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::fromROSMsg(*cloud_msg, *tmp);
+    pcl::copyPointCloud(*tmp, *cloud2);
+    gotCloud2 = true;
 }
 void QNode::cloudCallback3(const sensor_msgs::PointCloud2ConstPtr &cloud_msg){
-        // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
-        pcl::fromROSMsg(*cloud_msg, *cloud3);
-        gotCloud3 = true;
+    // Convert ROS message (PointCloud2) to PCL point cloud (PointCloud(PointXYZ))
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::fromROSMsg(*cloud_msg, *tmp);
+    pcl::copyPointCloud(*tmp, *cloud3);
+    gotCloud3 = true;
 }
 
 

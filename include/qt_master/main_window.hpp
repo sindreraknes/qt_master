@@ -19,6 +19,9 @@
 #include <vtkRenderWindow.h>
 #include <QVTKWidget.h>
 #include "PointCloudManipulator.hpp"
+#include <ros/ros.h>
+#include <ros/package.h>
+
 
 
 /*****************************************************************************

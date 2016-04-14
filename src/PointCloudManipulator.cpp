@@ -950,7 +950,7 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
 
-    //visualizeCorrespondences(modelFeature.keyPoints, sceneFeature.keyPoints, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
+    visualizeCorrespondences(modelFeature.keyPoints, sceneFeature.keyPoints, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
 
     Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
     transSVD = estimateTransformationSVD(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
@@ -1057,13 +1057,23 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
 }
 
-void PointCloudManipulator::alignAndMatch(std::vector<pcl::PointCloud::Ptr> clouds)
+void PointCloudManipulator::alignAndMatch(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds)
 {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene(new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr model(new pcl::PointCloud<pcl::PointXYZRGB>());
     // this might fail during compilation
     scene = alignCloudsRefined(clouds);
-    *model = clouds.at(clouds.size());
+    std::cout << "Did this shiiiiiiiiiiit" << std::endl;
+    std::cout << clouds.size() << std::endl;
+    *model = *clouds.at(clouds.size()-1);
+
+    pcl::visualization::PCLVisualizer vis;
+    vis.addPointCloud(scene, "scene");
+    vis.addPointCloud(model, "model");
+    vis.spin();
+
+    matchModelCloud(model, scene);
+
 
 
 }
@@ -1102,7 +1112,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::alignCloudsRefined
 
     for(int i = 0; i<cloudsIn.size()-1; i++){
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
-        *tmpCloud = *clouds.at(i);
+        std::cout << "Loop nr: " << i << std::endl;
+        *tmpCloud = *cloudsIn.at(i);
 
 
         cloudsOriginal.push_back(tmpCloud);
@@ -1178,6 +1189,13 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::alignCloudsRefined
     }
 
     pcl::io::savePCDFileBinary("/home/minions/alignedWithObject.pcd", *writeToFileCloud);
+
+
+//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr test (new pcl::PointCloud<pcl::PointXYZRGB>());
+//    for(int i=0; i<roughClouds.size(); i++){
+//        *test += *roughClouds.at(i);
+//    }
+//    return test;
 
     return (writeToFileCloud);
 }

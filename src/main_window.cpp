@@ -24,6 +24,8 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     , qnode(argc,argv)
 {
     qRegisterMetaType<boost::shared_ptr<pcl::visualization::PCLVisualizer> >("boost::shared_ptr<pcl::visualization::PCLVisualizer>");
+    qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> ("pcl::PointCloud<pcl::PointXYZRGB>::Ptr");
+    qRegisterMetaType<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >("std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>");
     // Initialize UI
     ui.setupUi(this);
     QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
@@ -92,8 +94,11 @@ void MainWindow::receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::P
     path.append("/models/");
     QString tmp = ui.modelList->currentText();
     path.append(tmp.toStdString());
+    path.append(".pcd");
     pcl::io::loadPCDFile<pcl::PointXYZRGB>(path, *model);
     clouds.push_back(model);
+
+    std::cout << "Size of clouds: " << clouds.size() << std::endl;
 
     manipulator->alignAndMatch(clouds);
 }
@@ -437,7 +442,9 @@ void MainWindow::initializeUI()
     models.append("boxHole");
     models.append("boxHoleSide");
     models.append("boxHoleUp");
-    models.append("SOMETHING MORE");
+    models.append("cone");
+    models.append("freakthing");
+    ui.modelList->addItems(models);
 
 
 
