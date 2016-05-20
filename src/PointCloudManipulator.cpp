@@ -602,6 +602,35 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlane(pcl::
     return (cloud_no_plane);
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudManipulator::extractPlaneReturnPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius)
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    // Create the segmentation object
+    pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+    // Optional
+    seg.setOptimizeCoefficients (true);
+    // Mandatory
+    seg.setModelType (pcl::SACMODEL_PLANE);
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMaxIterations(100);
+    seg.setDistanceThreshold (radius);
+    seg.setInputCloud (inCloud);
+    seg.segment (*inliers, *coefficients);
+
+    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+    extract.setInputCloud (inCloud);
+    extract.setIndices (inliers);
+    extract.setNegative (false);
+
+    // Get the points associated with the planar surface
+    extract.filter (*cloud_plane);
+
+    return (cloud_plane);
+}
+
 PointCloudManipulator::PointCloudFeatures PointCloudManipulator::computeFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, QString keyPoints, QString descriptors)
 {
     PointCloudFeatures features;
@@ -1487,13 +1516,39 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
         }
         tmpCloud = filterVoxel(tmpCloud, 0.01); //0.01
         //tmpCloud = filterOutlier(tmpCloud);
-        tmpCloud = extractPlane(tmpCloud, 0.1);
+        tmpCloud = extractPlaneReturnPlane(tmpCloud, 0.1);
 
         PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "FPFH");
         //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "VOXEL", "FPFH");
         //PointCloudFeatures tmpFeature = computeFeatures(tmpCloud, "SIFT", "SHOTCOLOR");
         pointClouds.push_back(tmpFeature);
     }
+
+    Eigen::Matrix4f prevTrans = Eigen::Matrix4f::Identity();
+    for(int k = 0; k<pointClouds.size()-1; k++){
+        pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
+        all_correspondences = findCorrespondences(pointClouds.at(k).localDescriptorsFPFH, pointClouds.at(k+1).localDescriptorsFPFH);
+        std::cout << "CorrespondenceEstimation correspondences ALL: ";
+        std::cout << all_correspondences->size() << std::endl;
+
+        pcl::CorrespondencesPtr corrRejectSampleConsensus (new pcl::Correspondences);
+        corrRejectSampleConsensus = rejectCorrespondencesSampleConsensus(all_correspondences,pointClouds.at(k).keyPoints,pointClouds.at(k+1).keyPoints,0.25,1000);
+        std::cout << "Rejected using sample consensus, new amount is : ";
+        std::cout << corrRejectSampleConsensus->size() << std::endl;
+        visualizeCorrespondences(pointClouds.at(k).points, pointClouds.at(k+1).points, pointClouds.at(k).keyPoints, pointClouds.at(k+1).keyPoints, all_correspondences, corrRejectSampleConsensus);
+
+        Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
+        transSVD = estimateTransformationSVD(pointClouds.at(k).keyPoints, pointClouds.at(k+1).keyPoints, corrRejectSampleConsensus);
+        std::cout << transSVD << std::endl;
+        visualizeTransformation(pointClouds.at(k+1).points, pointClouds.at(k).points, transSVD);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp (new pcl::PointCloud<pcl::PointXYZRGB>());
+        Eigen::Matrix4f trans = prevTrans*transSVD.inverse();
+        pcl::transformPointCloud(*pointClouds.at(k+1).points,*tmp,trans);
+
+    }
+
+
+
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpAligned (new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr icpCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -1505,6 +1560,8 @@ void PointCloudManipulator::alignRobotCell(QStringList fileNames)
     icp.setMaximumIterations(10000);
     icp.setTransformationEpsilon(1e-10);
     icp.setEuclideanFitnessEpsilon(0.0000001);
+
+    std::cout << "DID EVERYTHING " << std::endl;
 
 
     for(int k = 0; k<pointClouds.size()-1; k++){

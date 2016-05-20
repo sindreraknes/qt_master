@@ -129,6 +129,7 @@ public:
                                             float minSampleDistance, float maxCorrespondenceDistance, int nrIterations);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr extractPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr extractPlaneReturnPlane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr inCloud, double radius);
 
     // Struct with different information of each point cloud
     struct PointCloudFeatures{

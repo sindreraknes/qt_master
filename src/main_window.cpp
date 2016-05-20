@@ -266,8 +266,9 @@ void MainWindow::on_button_tester_clicked(bool check)
 
     //manipulator->alignRobotCell(fileNames);
 
-    manipulator->refineAlignment(fileNames);
+    //manipulator->refineAlignment(fileNames);
     //manipulator->roflKinect(fileNames);
+    manipulator->alignRobotCell(fileNames);
 }
 
 void MainWindow::on_button_plan_move_clicked(bool check)
