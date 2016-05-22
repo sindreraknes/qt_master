@@ -936,6 +936,11 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr fullScene(new pcl::PointCloud<pcl::PointXYZRGB>());
     *fullScene = *scene;
 
+
+
+
+
+
     //Camera to tag
     Eigen::Matrix4f cameraToTag = Eigen::Matrix4f::Identity();
 //    cameraToTag << 0.0139678,  0.998862,   0.0456047, -0.299209,
@@ -966,6 +971,11 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     PointCloudFeatures sceneFeature = computeFeatures(scene, "SIFT", "SHOTCOLOR");
 
 
+    pcl::visualization::PCLVisualizer rapportvis;
+    rapportvis.addPointCloud(scene, "scene");
+    rapportvis.spin();
+
+
     // CORRESPONDENCE USING CORRESPONDENCEESTIMATION
     pcl::CorrespondencesPtr all_correspondences (new pcl::Correspondences);
     //all_correspondences = findCorrespondences(modelFeature.localDescriptorsFPFH, sceneFeature.localDescriptorsFPFH);
@@ -979,13 +989,15 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     std::cout << "Rejected using sample consensus, new amount is : ";
     std::cout << corrRejectSampleConsensus->size() << std::endl;
 
-    visualizeCorrespondences(modelFeature.keyPoints, sceneFeature.keyPoints, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
+    //visualizeCorrespondences(modelFeature.keyPoints, sceneFeature.keyPoints, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
+    visualizeCorrespondences(modelFeature.points, fullScene, modelFeature.keyPoints, sceneFeature.keyPoints, all_correspondences, corrRejectSampleConsensus);
 
     Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
     transSVD = estimateTransformationSVD(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
     std::cout << "Initial transformation: " << std::endl;
     std::cout << transSVD << std::endl;
-    //visualizeTransformation(sceneFeature.points, modelFeature.points, transSVD);
+    visualizeTransformation(sceneFeature.points, modelFeature.points, transSVD);
+    //visualizeTransformation(fullScene, modelFeature.points, transSVD);
 
 //    Eigen::Matrix4f transLM = Eigen::Matrix4f::Identity ();
 //    transLM = estimateTransformationLM(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
@@ -1003,16 +1015,19 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 //    std::cout << "X: " << x << ", Y: " << y << ", Z: " << z << std::endl;
 //    std::cout << "Roll: " << roll*(180.0/3.14) << ", Pitch: " << pitch*(180.0/3.14) << ", yaw: " << yaw*(180.0/3.14) << std::endl;
 
+
+    std::cout << "VISUALIZE ESTIMATION TRANSFORMATION" << std::endl;
     A = transSVD;
     Eigen::Affine3f B2;
     B2 = cameraToTag;
     pcl::visualization::PCLVisualizer vis;
-    vis.addCoordinateSystem(0.2);
-    vis.addCoordinateSystem(0.4, A);
-    vis.addCoordinateSystem(0.8, B2);
+    //vis.addCoordinateSystem(0.2);
+    //vis.addCoordinateSystem(0.4, A);
+    //vis.addCoordinateSystem(0.8, B2);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red (modelFeature.points, 255, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> blue (fullScene, 0, 0, 255);
-    vis.addPointCloud(fullScene,blue, "fullScene");
+    //vis.addPointCloud(fullScene,blue, "fullScene");
+    vis.addPointCloud(fullScene, "fullScene");
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr model2 (new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::transformPointCloud(*modelFeature.points,*model2,transSVD);
     vis.addPointCloud(modelFeature.points,red, "model");
@@ -1068,6 +1083,7 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     vis.addCoordinateSystem(0.5, C);
     vis.spin();
 
+    std::cout << "World coordinates" << std::endl;
     Eigen::Matrix4f posInWorld = worldToTag*finalTable;
     std::cout << posInWorld << std::endl;
 
@@ -1076,12 +1092,20 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     Eigen::Affine3f finalCoordinates;
     finalCoordinates = final;
     visualizer.reset(new pcl::visualization::PCLVisualizer ("viewer2", false));
-    visualizer->addCoordinateSystem(0.5, B2);
-    visualizer->addCoordinateSystem(0.5, finalCoordinates);
+    visualizer->addCoordinateSystem(0.2, B2);
+    visualizer->addCoordinateSystem(0.2, finalCoordinates);
+    visualizer->addCoordinateSystem(0.2, C);
     visualizer->addPointCloud(fullScene, "fullScene");
     visualizer->addPointCloud(heihoo, "model");
 
     Q_EMIT sendNewVisualizer(visualizer);
+
+
+    pcl::visualization::PCLVisualizer tmpVis;
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> red2 (heihoo, 255, 0, 0);
+    tmpVis.addPointCloud(heihoo,red2, "model");
+    tmpVis.addPointCloud(fullScene, "fullScene");
+    tmpVis.spin();
 
 
 }
