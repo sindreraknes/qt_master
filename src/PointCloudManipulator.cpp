@@ -994,7 +994,7 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
     Eigen::Matrix4f transSVD = Eigen::Matrix4f::Identity ();
     transSVD = estimateTransformationSVD(modelFeature.keyPoints, sceneFeature.keyPoints, corrRejectSampleConsensus);
-    std::cout << "Initial transformation: " << std::endl;
+    std::cout << "Initial transformation CAMERA to OBJECT: " << std::endl;
     std::cout << transSVD << std::endl;
     visualizeTransformation(sceneFeature.points, modelFeature.points, transSVD);
     //visualizeTransformation(fullScene, modelFeature.points, transSVD);
@@ -1008,13 +1008,6 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
 
 
     Eigen::Affine3f A;
-
-//    float x, y, z, roll, pitch, yaw;
-//    A = B;
-//    pcl::getTranslationAndEulerAngles(A, x, y, z, roll, pitch, yaw);
-//    std::cout << "X: " << x << ", Y: " << y << ", Z: " << z << std::endl;
-//    std::cout << "Roll: " << roll*(180.0/3.14) << ", Pitch: " << pitch*(180.0/3.14) << ", yaw: " << yaw*(180.0/3.14) << std::endl;
-
 
     std::cout << "VISUALIZE ESTIMATION TRANSFORMATION" << std::endl;
     A = transSVD;
@@ -1058,8 +1051,11 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     }
     final = final*transSVD;
 
-    std::cout << "Final transformation: " << std::endl;
+    std::cout << "FINAL transformation CAMERA to OBJECT: " << std::endl;
     std::cout << final << std::endl;
+
+    std::cout << "CAMERA TO TAG MATRIX: " << std::endl;
+    std::cout << cameraToTag << std::endl;
 
     Eigen::Matrix4f initialTable = cameraToTag.inverse()*transSVD;
     std::cout << "Initial table transform: " << std::endl;
@@ -1086,6 +1082,15 @@ void PointCloudManipulator::matchModelCloud(pcl::PointCloud<pcl::PointXYZRGB>::P
     std::cout << "World coordinates" << std::endl;
     Eigen::Matrix4f posInWorld = worldToTag*finalTable;
     std::cout << posInWorld << std::endl;
+
+
+
+    Eigen::Affine3f A2;
+    float x, y, z, roll, pitch, yaw;
+    A2 = posInWorld;
+    pcl::getTranslationAndEulerAngles(A2, x, y, z, roll, pitch, yaw);
+    std::cout << "X: " << x << ", Y: " << y << ", Z: " << z << std::endl;
+    std::cout << "Roll: " << roll*(180.0/3.14) << ", Pitch: " << pitch*(180.0/3.14) << ", yaw: " << yaw*(180.0/3.14) << std::endl;
 
 
 
