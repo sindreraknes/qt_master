@@ -1,50 +1,28 @@
-/**
- * @file /src/main_window.cpp
- *
- * @brief Implementation for the qt gui.
- *
- * @date February 2011
- **/
-/*****************************************************************************
-** Includes
-*****************************************************************************/
-
 #include <QtGui>
 #include <QMessageBox>
 #include <iostream>
 #include "../include/qt_master/main_window.hpp"
 
-
 namespace qt_master {
-
 using namespace Qt;
-
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
-	: QMainWindow(parent)
+    : QMainWindow(parent)
     , qnode(argc,argv)
 {
     qRegisterMetaType<boost::shared_ptr<pcl::visualization::PCLVisualizer> >("boost::shared_ptr<pcl::visualization::PCLVisualizer>");
     qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> ("pcl::PointCloud<pcl::PointXYZRGB>::Ptr");
     qRegisterMetaType<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >("std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>");
-    // Initialize UI
     ui.setupUi(this);
     QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
     setWindowIcon(QIcon(":/images/icon.png"));
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
-
-    // Initialize ROS
     qnode.init();
-
-    // Manipulator / Filter
     manipulator = new PointCloudManipulator();
     QObject::connect(&qnode, SIGNAL(send3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>)), this, SLOT(receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>)));
     QObject::connect(manipulator, SIGNAL(sendNewIndexInfo(QStringList,QList<bool>, QList<double>)), this, SLOT(setNewIndexInfo(QStringList,QList<bool>, QList<double>)));
     QObject::connect(manipulator, SIGNAL(sendNewVisualizer(boost::shared_ptr<pcl::visualization::PCLVisualizer>)), this, SLOT(setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer>)));
     QObject::connect(manipulator, SIGNAL(sendNewPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)), this, SLOT(displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, QString)));
-
-    // Initialize UI
     initializeUI();
-    //Q_EMIT on_button_tester_clicked(true);
 }
 
 MainWindow::~MainWindow() {}
@@ -88,7 +66,6 @@ void MainWindow::displayPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 
 void MainWindow::receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds)
 {
-    // ADD SELECTED MODEL TO THE CLOUDS VECTOR BEFORE SENDING
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr model (new pcl::PointCloud<pcl::PointXYZRGB>());
     std::string path = ros::package::getPath("qt_master");
     path.append("/models/");
@@ -97,12 +74,9 @@ void MainWindow::receive3Clouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::P
     path.append(".pcd");
     pcl::io::loadPCDFile<pcl::PointXYZRGB>(path, *model);
     clouds.push_back(model);
-
     std::cout << "Size of clouds: " << clouds.size() << std::endl;
-
     manipulator->alignAndMatch(clouds);
 }
-
 
 void MainWindow::on_button_refresh_topics_clicked(bool check)
 {
@@ -113,27 +87,18 @@ void MainWindow::on_button_refresh_topics_clicked(bool check)
 void MainWindow::on_button_subscribe_topic_clicked(bool check)
 {
     ui.dock_status->setVisible(true);
-
-
-    if(ui.comboBox->currentText().length() != 0){
-
-    }
-
-
-    manipulator->extractClusters(displayCloud, 0.02);
 }
 
 void MainWindow::on_button_save_filtered_cloud_clicked(bool check)
 {
     QString selFilter="PCD files (*.pcd)";
     QString fileName = QFileDialog::getSaveFileName(this,"Save file",QDir::currentPath(),
-        "PCD files (*.pcd)",&selFilter);
+                                                    "PCD files (*.pcd)",&selFilter);
     if(!fileName.endsWith(".pcd",Qt::CaseInsensitive)){
         fileName.append(".pcd");
     }
     pcl::io::savePCDFileBinary(fileName.toUtf8().constData(), *filteredCloud);
 }
-
 
 void MainWindow::on_button_filter_clicked(bool check)
 {
@@ -182,17 +147,13 @@ void MainWindow::on_button_add_cloud_clicked(bool check)
         }
         displayPointCloudLeft(displayCloud, "displayCloud");
     }
-
-
 }
 
 void MainWindow::on_button_reload_cloud_clicked(bool check)
 {
     pcl::io::savePCDFileBinary("/home/minions/tmp_cloud.pcd", *filteredCloud);
     displayPointCloud("/home/minions/tmp_cloud.pcd", "displayCloud");
-
     ui.logBox->append(manipulator->getLastFiltered());
-
 }
 
 void MainWindow::on_button_stl_clicked(bool check)
@@ -200,8 +161,7 @@ void MainWindow::on_button_stl_clicked(bool check)
     QString fileName;
     fileName = QFileDialog::getOpenFileName(this,tr("Choose a .stl file to open"),"/home/",tr("STL File (*.stl *.STL)"));
     filteredCloud = manipulator->sampleSTL(fileName,300,1);
-    //displayPointCloudLeft(filteredCloud, "filteredCloud");
-
+    displayPointCloudLeft(filteredCloud, "filteredCloud");
 }
 
 void MainWindow::on_button_match_clicked(bool check)
@@ -214,9 +174,7 @@ void MainWindow::on_button_match_clicked(bool check)
     sceneName = QFileDialog::getOpenFileName(this,tr("Choose SCENE cloud"),"/home/",tr("PCD File (*.pcd *.PCD)"));
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr sceneCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::io::loadPCDFile(sceneName.toStdString(), *sceneCloud);
-
     manipulator->matchModelCloud(modelCloud, sceneCloud);
-
 }
 
 void MainWindow::on_button_open_gripper_clicked(bool check)
@@ -248,53 +206,29 @@ void MainWindow::on_button_align_match_clicked(bool check)
     qnode.subscribe3Clouds();
 }
 
-
-
-
-
 void MainWindow::on_button_tester_clicked(bool check)
 {
     QStringList fileNames;
     fileNames = QFileDialog::getOpenFileNames(this,tr("Choose a .pcd file(s) to open"),"/home/minions/Downloads/",tr("PointClouds (*.pcd *.PCD)"));
-//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZRGB>);
-//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(0).toUtf8().constData(), *cloud1);
-//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
-//    pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames.at(1).toUtf8().constData(), *cloud2);
-    //manipulator->tester2(cloud1, cloud2);
-
-    //manipulator->alignClouds(fileNames);
-
-    //manipulator->alignRobotCell(fileNames);
-
     manipulator->refineAlignment(fileNames);
-    //manipulator->roflKinect(fileNames);
-    //manipulator->alignRobotCell(fileNames);
 }
 
 void MainWindow::on_button_plan_move_clicked(bool check)
 {
     if(ui.robot_selector->currentIndex() == 0){
-        // Agilus1
-        std::cout << "SUPPOSED TO PLAN AG1" << std::endl;
         qnode.planPose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),0);
     }
     else if(ui.robot_selector->currentIndex() == 1){
-        // Agilus2
-        std::cout << "SUPPOSED TO PLAN AG2" << std::endl;
         qnode.planPose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),1);
     }
-
 }
 
 void MainWindow::on_button_move_clicked(bool check)
 {
-
     if(ui.robot_selector->currentIndex() == 0){
-        // Agilus1
         qnode.movePose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),0);
     }
     else if(ui.robot_selector->currentIndex() == 1){
-        // Agilus2
         qnode.movePose(ui.x_pos->value(), ui.y_pos->value(), ui.z_pos->value(), ui.roll->value(), ui.pitch->value(), ui.yaw->value(),1);
     }
 }
@@ -310,9 +244,7 @@ void MainWindow::on_slider_1_valueChanged(int i)
     }
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
-
     }
-
 }
 
 void MainWindow::on_slider_2_valueChanged(int i)
@@ -327,7 +259,6 @@ void MainWindow::on_slider_2_valueChanged(int i)
     if(ui.auto_check->isChecked()){
         Q_EMIT on_button_filter_clicked(true);
     }
-
 }
 
 void MainWindow::on_slider_3_valueChanged(int i)
@@ -344,8 +275,6 @@ void MainWindow::on_slider_3_valueChanged(int i)
         Q_EMIT on_button_filter_clicked(true);
     }
 }
-
-
 
 void MainWindow::on_spinBox_1_valueChanged(double d)
 {
@@ -399,7 +328,6 @@ void MainWindow::setNewIndexInfo(QStringList labels, QList<bool> show, QList<dou
     ui.slider_2->setVisible(show.at(1));
     ui.slider_3->setVisible(show.at(2));
     ui.filter_XYZ->setVisible(show.at(3));
-
     Q_EMIT on_slider_1_valueChanged(50);
     Q_EMIT on_slider_2_valueChanged(50);
     Q_EMIT on_slider_3_valueChanged(50);
@@ -415,7 +343,6 @@ void MainWindow::setNewVis(boost::shared_ptr<pcl::visualization::PCLVisualizer> 
 
 void MainWindow::initializeUI()
 {
-    // Viewer setup
     w1 = new QVTKWidget();
     w2 = new QVTKWidget();
     viewer1.reset(new pcl::visualization::PCLVisualizer ("viewer1", false));
@@ -430,15 +357,12 @@ void MainWindow::initializeUI()
     ui.groupBox_12->setLayout(layout);
     ui.groupBox_12->layout()->addWidget(w1);
     ui.groupBox_12->layout()->addWidget(w2);
-
-    // Set up filter/manipulator
     ui.filter_box->addItems(manipulator->getFilters());
     QStringList xyz;
     xyz.append("x");
     xyz.append("y");
     xyz.append("z");
     ui.filter_XYZ->addItems(xyz);
-
     QStringList models;
     models.append("boxHole");
     models.append("boxHoleSide");
@@ -446,10 +370,6 @@ void MainWindow::initializeUI()
     models.append("cone");
     models.append("freakthing");
     ui.modelList->addItems(models);
-
-
-
 }
 
-}  // namespace qt_master
-
+}

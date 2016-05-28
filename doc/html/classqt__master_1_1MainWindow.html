@@ -37,7 +37,7 @@
 </div><!--header-->
 <div class="contents">
 
-<p>Qt central, all operations relating to the view part here.  
+<p>The <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class is the graphical user interface (GUI) class and controls events, updates visualizer etc.  
  <a href="classqt__master_1_1MainWindow.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>&gt;</code></p>
@@ -45,116 +45,155 @@
 Inheritance diagram for qt_master::MainWindow:</div>
 <div class="dyncontent">
 <div class="center"><img src="classqt__master_1_1MainWindow__inherit__graph.png" border="0" usemap="#qt__master_1_1MainWindow_inherit__map" alt="Inheritance graph"/></div>
-<map name="qt__master_1_1MainWindow_inherit__map" id="qt__master_1_1MainWindow_inherit__map">
-</map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-slots"></a>
 Public Slots</h2></td></tr>
 <tr class="memitem:ad259378bb5181590660ddcab5898faac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ad259378bb5181590660ddcab5898faac">displayPointCloud</a> (pcl::PointCloud&lt; pcl::PointXYZRGB &gt;::Ptr cloud, QString name)</td></tr>
+<tr class="memdesc:ad259378bb5181590660ddcab5898faac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Displays a point cloud object with a name.  <a href="#ad259378bb5181590660ddcab5898faac">More...</a><br/></td></tr>
 <tr class="separator:ad259378bb5181590660ddcab5898faac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78704176e8752dd1934a44ab66922480"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a78704176e8752dd1934a44ab66922480">on_button_add_cloud_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a78704176e8752dd1934a44ab66922480"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a point cloud to the visualizer.  <a href="#a78704176e8752dd1934a44ab66922480">More...</a><br/></td></tr>
 <tr class="separator:a78704176e8752dd1934a44ab66922480"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4de83d8281e2cf5bed9a9fcb4c2c8bdb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a4de83d8281e2cf5bed9a9fcb4c2c8bdb">on_button_align_match_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a4de83d8281e2cf5bed9a9fcb4c2c8bdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aquires 3 point clouds from camera1, camera2 and camera3, merges them together, and perform object detection on the selected model.  <a href="#a4de83d8281e2cf5bed9a9fcb4c2c8bdb">More...</a><br/></td></tr>
 <tr class="separator:a4de83d8281e2cf5bed9a9fcb4c2c8bdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ea96ed7a29ddb24f41ffee902265b91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a2ea96ed7a29ddb24f41ffee902265b91">on_button_close_gripper_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a2ea96ed7a29ddb24f41ffee902265b91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the gripper for the selected robot.  <a href="#a2ea96ed7a29ddb24f41ffee902265b91">More...</a><br/></td></tr>
 <tr class="separator:a2ea96ed7a29ddb24f41ffee902265b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b6ef74d8551f62891d8735871f34a06"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a7b6ef74d8551f62891d8735871f34a06">on_button_filter_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a7b6ef74d8551f62891d8735871f34a06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs the selected filter.  <a href="#a7b6ef74d8551f62891d8735871f34a06">More...</a><br/></td></tr>
 <tr class="separator:a7b6ef74d8551f62891d8735871f34a06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae04982399a7382a489e1b4d0b9ad3aa0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ae04982399a7382a489e1b4d0b9ad3aa0">on_button_match_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:ae04982399a7382a489e1b4d0b9ad3aa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Matches a scene with a model. Model and scene is selected from saved point clouds.  <a href="#ae04982399a7382a489e1b4d0b9ad3aa0">More...</a><br/></td></tr>
 <tr class="separator:ae04982399a7382a489e1b4d0b9ad3aa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a488f9ff50b69a64446e896218fccaa7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a488f9ff50b69a64446e896218fccaa7a">on_button_move_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a488f9ff50b69a64446e896218fccaa7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the selected robot to a pose.  <a href="#a488f9ff50b69a64446e896218fccaa7a">More...</a><br/></td></tr>
 <tr class="separator:a488f9ff50b69a64446e896218fccaa7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa50c8f045f3d1402ec49425160709db4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#aa50c8f045f3d1402ec49425160709db4">on_button_open_gripper_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:aa50c8f045f3d1402ec49425160709db4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens the gripper for the selected robot.  <a href="#aa50c8f045f3d1402ec49425160709db4">More...</a><br/></td></tr>
 <tr class="separator:aa50c8f045f3d1402ec49425160709db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3193d80d6811b344bc38c1f3d04113b9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a3193d80d6811b344bc38c1f3d04113b9">on_button_plan_move_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a3193d80d6811b344bc38c1f3d04113b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plans a pose for the selected robot.  <a href="#a3193d80d6811b344bc38c1f3d04113b9">More...</a><br/></td></tr>
 <tr class="separator:a3193d80d6811b344bc38c1f3d04113b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7adea9b4784b0c2d4c5db318bb6cee54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a7adea9b4784b0c2d4c5db318bb6cee54">on_button_refresh_topics_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a7adea9b4784b0c2d4c5db318bb6cee54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Refreshes the topic selector with new topic names.  <a href="#a7adea9b4784b0c2d4c5db318bb6cee54">More...</a><br/></td></tr>
 <tr class="separator:a7adea9b4784b0c2d4c5db318bb6cee54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98b23abbe2036634f7ca6b310e7df50a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a98b23abbe2036634f7ca6b310e7df50a">on_button_reload_cloud_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a98b23abbe2036634f7ca6b310e7df50a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the currently filtered cloud and reloads it to the left visualizer. Used when using multiple filters on the same point cloud.  <a href="#a98b23abbe2036634f7ca6b310e7df50a">More...</a><br/></td></tr>
 <tr class="separator:a98b23abbe2036634f7ca6b310e7df50a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69f2b8c23610eff87458820543294e6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a69f2b8c23610eff87458820543294e6b">on_button_save_filtered_cloud_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a69f2b8c23610eff87458820543294e6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves a filtered cloud.  <a href="#a69f2b8c23610eff87458820543294e6b">More...</a><br/></td></tr>
 <tr class="separator:a69f2b8c23610eff87458820543294e6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac763d7009f15e97fea45337c22b73f1f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ac763d7009f15e97fea45337c22b73f1f">on_button_stl_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:ac763d7009f15e97fea45337c22b73f1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a .STL file and converts it to a point cloud.  <a href="#ac763d7009f15e97fea45337c22b73f1f">More...</a><br/></td></tr>
 <tr class="separator:ac763d7009f15e97fea45337c22b73f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6cc02aae9fbeeb7fb126f229bd0203ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a6cc02aae9fbeeb7fb126f229bd0203ef">on_button_subscribe_topic_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a6cc02aae9fbeeb7fb126f229bd0203ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscribes to a selected topic.  <a href="#a6cc02aae9fbeeb7fb126f229bd0203ef">More...</a><br/></td></tr>
 <tr class="separator:a6cc02aae9fbeeb7fb126f229bd0203ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a531a52831d11aa7ab115685ec1453bf3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a531a52831d11aa7ab115685ec1453bf3">on_button_tester_clicked</a> (bool check)</td></tr>
+<tr class="memdesc:a531a52831d11aa7ab115685ec1453bf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tester button.  <a href="#a531a52831d11aa7ab115685ec1453bf3">More...</a><br/></td></tr>
 <tr class="separator:a531a52831d11aa7ab115685ec1453bf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26cc05f710908348deb49d023810cc02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a26cc05f710908348deb49d023810cc02">on_filter_box_currentIndexChanged</a> (int i)</td></tr>
+<tr class="memdesc:a26cc05f710908348deb49d023810cc02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if filter_box changes value.  <a href="#a26cc05f710908348deb49d023810cc02">More...</a><br/></td></tr>
 <tr class="separator:a26cc05f710908348deb49d023810cc02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acda1476075fa7e50819cf5bd5a9a38ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#acda1476075fa7e50819cf5bd5a9a38ba">on_slider_1_valueChanged</a> (int i)</td></tr>
+<tr class="memdesc:acda1476075fa7e50819cf5bd5a9a38ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if slider_1 changes value.  <a href="#acda1476075fa7e50819cf5bd5a9a38ba">More...</a><br/></td></tr>
 <tr class="separator:acda1476075fa7e50819cf5bd5a9a38ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae78c28a313c3a0544854db0b554a327e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ae78c28a313c3a0544854db0b554a327e">on_slider_2_valueChanged</a> (int i)</td></tr>
+<tr class="memdesc:ae78c28a313c3a0544854db0b554a327e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if slider_2 changes value.  <a href="#ae78c28a313c3a0544854db0b554a327e">More...</a><br/></td></tr>
 <tr class="separator:ae78c28a313c3a0544854db0b554a327e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92b5f3fdeb60c04ac48061b0b3ada274"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a92b5f3fdeb60c04ac48061b0b3ada274">on_slider_3_valueChanged</a> (int i)</td></tr>
+<tr class="memdesc:a92b5f3fdeb60c04ac48061b0b3ada274"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if slider_3 changes value.  <a href="#a92b5f3fdeb60c04ac48061b0b3ada274">More...</a><br/></td></tr>
 <tr class="separator:a92b5f3fdeb60c04ac48061b0b3ada274"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c9f64893c6d24a3576c16d377dc29eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a9c9f64893c6d24a3576c16d377dc29eb">on_spinBox_1_valueChanged</a> (double d)</td></tr>
+<tr class="memdesc:a9c9f64893c6d24a3576c16d377dc29eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if spinBox_1 changes value.  <a href="#a9c9f64893c6d24a3576c16d377dc29eb">More...</a><br/></td></tr>
 <tr class="separator:a9c9f64893c6d24a3576c16d377dc29eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e13f0a84485e23afc44e9a8ba71a367"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a9e13f0a84485e23afc44e9a8ba71a367">on_spinBox_2_valueChanged</a> (double d)</td></tr>
+<tr class="memdesc:a9e13f0a84485e23afc44e9a8ba71a367"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if spinBox_2 changes value.  <a href="#a9e13f0a84485e23afc44e9a8ba71a367">More...</a><br/></td></tr>
 <tr class="separator:a9e13f0a84485e23afc44e9a8ba71a367"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd472f3be22509513e90f117b81ee8b2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#acd472f3be22509513e90f117b81ee8b2">on_spinBox_3_valueChanged</a> (double d)</td></tr>
+<tr class="memdesc:acd472f3be22509513e90f117b81ee8b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs if spinBox_3 changes value.  <a href="#acd472f3be22509513e90f117b81ee8b2">More...</a><br/></td></tr>
 <tr class="separator:acd472f3be22509513e90f117b81ee8b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77c92c2ffcc883da0b718755891ba0f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a77c92c2ffcc883da0b718755891ba0f5">receive3Clouds</a> (std::vector&lt; pcl::PointCloud&lt; pcl::PointXYZRGB &gt;::Ptr &gt; clouds)</td></tr>
+<tr class="memdesc:a77c92c2ffcc883da0b718755891ba0f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recieves 3 point clouds from the ROS node.  <a href="#a77c92c2ffcc883da0b718755891ba0f5">More...</a><br/></td></tr>
 <tr class="separator:a77c92c2ffcc883da0b718755891ba0f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d5674c0521566405f01264aa8d2999a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a3d5674c0521566405f01264aa8d2999a">setNewIndexInfo</a> (QStringList labels, QList&lt; bool &gt; show, QList&lt; double &gt; stepsAndRange)</td></tr>
+<tr class="memdesc:a3d5674c0521566405f01264aa8d2999a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method that sets new parameters for the selected filter.  <a href="#a3d5674c0521566405f01264aa8d2999a">More...</a><br/></td></tr>
 <tr class="separator:a3d5674c0521566405f01264aa8d2999a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcd2cae2269b7d909e2177adcccb8b78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#afcd2cae2269b7d909e2177adcccb8b78">setNewVis</a> (boost::shared_ptr&lt; pcl::visualization::PCLVisualizer &gt; vis)</td></tr>
+<tr class="memdesc:afcd2cae2269b7d909e2177adcccb8b78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a new visualizer object to the GUI.  <a href="#afcd2cae2269b7d909e2177adcccb8b78">More...</a><br/></td></tr>
 <tr class="separator:afcd2cae2269b7d909e2177adcccb8b78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a195d19101266669cc07fb9e38031abed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a195d19101266669cc07fb9e38031abed">closeEvent</a> (QCloseEvent *event)</td></tr>
-<tr class="memdesc:a195d19101266669cc07fb9e38031abed"><td class="mdescLeft">&#160;</td><td class="mdescRight">metodebeskrivelse  <a href="#a195d19101266669cc07fb9e38031abed">More...</a><br/></td></tr>
+<tr class="memdesc:a195d19101266669cc07fb9e38031abed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overloaded function that is called when the GUI is closed.  <a href="#a195d19101266669cc07fb9e38031abed">More...</a><br/></td></tr>
 <tr class="separator:a195d19101266669cc07fb9e38031abed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e863ac7f5ec62872ccdc9562710bb26"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a9e863ac7f5ec62872ccdc9562710bb26">displayPointCloud</a> (QString url, QString name)</td></tr>
+<tr class="memdesc:a9e863ac7f5ec62872ccdc9562710bb26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a point cloud from file and displays it.  <a href="#a9e863ac7f5ec62872ccdc9562710bb26">More...</a><br/></td></tr>
 <tr class="separator:a9e863ac7f5ec62872ccdc9562710bb26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7c823c13de3afe2f42519b49e62d5e8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ad7c823c13de3afe2f42519b49e62d5e8">displayPointCloudLeft</a> (pcl::PointCloud&lt; pcl::PointXYZRGB &gt;::Ptr cloud, QString name)</td></tr>
+<tr class="memdesc:ad7c823c13de3afe2f42519b49e62d5e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Displays a point cloud on the left visualizer.  <a href="#ad7c823c13de3afe2f42519b49e62d5e8">More...</a><br/></td></tr>
 <tr class="separator:ad7c823c13de3afe2f42519b49e62d5e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad026a4494f4795ae27f84a48adb291e6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ad026a4494f4795ae27f84a48adb291e6">MainWindow</a> (int argc, char **argv, QWidget *parent=0)</td></tr>
+<tr class="memdesc:ad026a4494f4795ae27f84a48adb291e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class.  <a href="#ad026a4494f4795ae27f84a48adb291e6">More...</a><br/></td></tr>
 <tr class="separator:ad026a4494f4795ae27f84a48adb291e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54644885f426258137289d3978ca1635"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a54644885f426258137289d3978ca1635">~MainWindow</a> ()</td></tr>
+<tr class="memdesc:a54644885f426258137289d3978ca1635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deconstructor for <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class.  <a href="#a54644885f426258137289d3978ca1635">More...</a><br/></td></tr>
 <tr class="separator:a54644885f426258137289d3978ca1635"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:ad7e580212b0ac9d4b3a979c330a0a7e9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ad7e580212b0ac9d4b3a979c330a0a7e9">initializeUI</a> ()</td></tr>
+<tr class="memdesc:ad7e580212b0ac9d4b3a979c330a0a7e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialization of the GUI.  <a href="#ad7e580212b0ac9d4b3a979c330a0a7e9">More...</a><br/></td></tr>
 <tr class="separator:ad7e580212b0ac9d4b3a979c330a0a7e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a23e7a16bd5b0576b0c56fecaca44e57d"><td class="memItemLeft" align="right" valign="top">std::vector<br class="typebreak"/>
 &lt; pcl::visualization::Camera &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a23e7a16bd5b0576b0c56fecaca44e57d">cam</a></td></tr>
+<tr class="memdesc:a23e7a16bd5b0576b0c56fecaca44e57d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vector of camera positions.  <a href="#a23e7a16bd5b0576b0c56fecaca44e57d">More...</a><br/></td></tr>
 <tr class="separator:a23e7a16bd5b0576b0c56fecaca44e57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab917bfd9041ec75ee511e6fc79e10a7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#aab917bfd9041ec75ee511e6fc79e10a7">changedFilter</a></td></tr>
+<tr class="memdesc:aab917bfd9041ec75ee511e6fc79e10a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for changing filter in the GUI.  <a href="#aab917bfd9041ec75ee511e6fc79e10a7">More...</a><br/></td></tr>
 <tr class="separator:aab917bfd9041ec75ee511e6fc79e10a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8e88dc30213dc1f9bd0400a93c9a95b"><td class="memItemLeft" align="right" valign="top">pcl::PointCloud<br class="typebreak"/>
 &lt; pcl::PointXYZRGB &gt;::Ptr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#ad8e88dc30213dc1f9bd0400a93c9a95b">displayCloud</a></td></tr>
+<tr class="memdesc:ad8e88dc30213dc1f9bd0400a93c9a95b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The point cloud on the left.  <a href="#ad8e88dc30213dc1f9bd0400a93c9a95b">More...</a><br/></td></tr>
 <tr class="separator:ad8e88dc30213dc1f9bd0400a93c9a95b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa062c2ff363eb194b51dd0446e3ebfa8"><td class="memItemLeft" align="right" valign="top">pcl::PointCloud<br class="typebreak"/>
 &lt; pcl::PointXYZRGB &gt;::Ptr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#aa062c2ff363eb194b51dd0446e3ebfa8">filteredCloud</a></td></tr>
+<tr class="memdesc:aa062c2ff363eb194b51dd0446e3ebfa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The point cloud on the right.  <a href="#aa062c2ff363eb194b51dd0446e3ebfa8">More...</a><br/></td></tr>
 <tr class="separator:aa062c2ff363eb194b51dd0446e3ebfa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aadc7cec909c4b1ad2047e37f565e9dbf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classqt__master_1_1PointCloudManipulator.html">PointCloudManipulator</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#aadc7cec909c4b1ad2047e37f565e9dbf">manipulator</a></td></tr>
+<tr class="memdesc:aadc7cec909c4b1ad2047e37f565e9dbf"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classqt__master_1_1PointCloudManipulator.html" title="The PointCloudManipulator class contains a number of filtering methods, algorithms and matching metho...">PointCloudManipulator</a> object instance.  <a href="#aadc7cec909c4b1ad2047e37f565e9dbf">More...</a><br/></td></tr>
 <tr class="separator:aadc7cec909c4b1ad2047e37f565e9dbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a301ac5e4619e4012d25845b46441cd8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classqt__master_1_1QNode.html">QNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a301ac5e4619e4012d25845b46441cd8d">qnode</a></td></tr>
+<tr class="memdesc:a301ac5e4619e4012d25845b46441cd8d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classqt__master_1_1QNode.html" title="The QNode class is a ROS node that deals with the communication between the robots, camera outputs etc. ">QNode</a> object instance.  <a href="#a301ac5e4619e4012d25845b46441cd8d">More...</a><br/></td></tr>
 <tr class="separator:a301ac5e4619e4012d25845b46441cd8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab69f2b2da6a52b6141db7bb9157f8aa"><td class="memItemLeft" align="right" valign="top">Ui::MainWindowDesign&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#aab69f2b2da6a52b6141db7bb9157f8aa">ui</a></td></tr>
+<tr class="memdesc:aab69f2b2da6a52b6141db7bb9157f8aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">The UI object (contains the .ui file)  <a href="#aab69f2b2da6a52b6141db7bb9157f8aa">More...</a><br/></td></tr>
 <tr class="separator:aab69f2b2da6a52b6141db7bb9157f8aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82eb2382a8ced985d7eed54a87d8b8f2"><td class="memItemLeft" align="right" valign="top">boost::shared_ptr<br class="typebreak"/>
 &lt; pcl::visualization::PCLVisualizer &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a82eb2382a8ced985d7eed54a87d8b8f2">viewer1</a></td></tr>
+<tr class="memdesc:a82eb2382a8ced985d7eed54a87d8b8f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">The left visualizer.  <a href="#a82eb2382a8ced985d7eed54a87d8b8f2">More...</a><br/></td></tr>
 <tr class="separator:a82eb2382a8ced985d7eed54a87d8b8f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8497bd53a7557c35ab2b585bc39fd93e"><td class="memItemLeft" align="right" valign="top">boost::shared_ptr<br class="typebreak"/>
 &lt; pcl::visualization::PCLVisualizer &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a8497bd53a7557c35ab2b585bc39fd93e">viewer2</a></td></tr>
+<tr class="memdesc:a8497bd53a7557c35ab2b585bc39fd93e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The right visualizer.  <a href="#a8497bd53a7557c35ab2b585bc39fd93e">More...</a><br/></td></tr>
 <tr class="separator:a8497bd53a7557c35ab2b585bc39fd93e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a90a49c99c330bd7cdfe57331ff4840b1"><td class="memItemLeft" align="right" valign="top">QVTKWidget *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a90a49c99c330bd7cdfe57331ff4840b1">w1</a></td></tr>
+<tr class="memdesc:a90a49c99c330bd7cdfe57331ff4840b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Widget to contain the left visualizer.  <a href="#a90a49c99c330bd7cdfe57331ff4840b1">More...</a><br/></td></tr>
 <tr class="separator:a90a49c99c330bd7cdfe57331ff4840b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59fc5896da312d1a6833b19e52268aa7"><td class="memItemLeft" align="right" valign="top">QVTKWidget *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classqt__master_1_1MainWindow.html#a59fc5896da312d1a6833b19e52268aa7">w2</a></td></tr>
+<tr class="memdesc:a59fc5896da312d1a6833b19e52268aa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Widget to contain the right visualizer.  <a href="#a59fc5896da312d1a6833b19e52268aa7">More...</a><br/></td></tr>
 <tr class="separator:a59fc5896da312d1a6833b19e52268aa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Qt central, all operations relating to the view part here. </p>
+<div class="textblock"><p>The <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class is the graphical user interface (GUI) class and controls events, updates visualizer etc. </p>
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00039">39</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00019">19</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ad026a4494f4795ae27f84a48adb291e6"></a>
 <div class="memitem">
@@ -186,7 +225,17 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00022">22</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Constructor for <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">argc</td><td>Initialization argument </td></tr>
+    <tr><td class="paramname">argv</td><td>Initialization argument </td></tr>
+    <tr><td class="paramname">parent</td><td>parent graphics component </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00008">8</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -203,7 +252,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00050">50</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Deconstructor for <a class="el" href="classqt__master_1_1MainWindow.html" title="The MainWindow class is the graphical user interface (GUI) class and controls events, updates visualizer etc. ">MainWindow</a> class. </p>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00028">28</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -222,16 +273,15 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>metodebeskrivelse </p>
+<p>Overloaded function that is called when the GUI is closed. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">*event</td><td></td></tr>
+    <tr><td class="paramname">event</td><td>the event that occured. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00052">52</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00030">30</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -259,7 +309,16 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00057">57</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Loads a point cloud from file and displays it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">url</td><td>path to file </td></tr>
+    <tr><td class="paramname">name</td><td>name of cloud (has to be unique if there already is one) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00035">35</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -295,7 +354,16 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00080">80</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Displays a point cloud object with a name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cloud</td><td>the point cloud object </td></tr>
+    <tr><td class="paramname">name</td><td>name of the cloud (has to be unique if there already is one) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00058">58</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -323,7 +391,16 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00071">71</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Displays a point cloud on the left visualizer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cloud</td><td>the point cloud object </td></tr>
+    <tr><td class="paramname">name</td><td>name of the cloud (has to be unique if there already is one) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00049">49</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -348,7 +425,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00416">416</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Initialization of the GUI. </p>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00344">344</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -374,7 +453,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00148">148</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Adds a point cloud to the visualizer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00113">113</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -400,7 +487,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00246">246</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Aquires 3 point clouds from camera1, camera2 and camera3, merges them together, and perform object detection on the selected model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00204">204</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -426,7 +521,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00234">234</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Closes the gripper for the selected robot. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00192">192</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -452,7 +555,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00138">138</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs the selected filter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00103">103</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -478,7 +589,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00207">207</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Matches a scene with a model. Model and scene is selected from saved point clouds. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00167">167</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -504,7 +623,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00289">289</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Moves the selected robot to a pose. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00226">226</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -530,7 +657,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00222">222</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Opens the gripper for the selected robot. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00180">180</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -556,7 +691,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00274">274</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Plans a pose for the selected robot. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00216">216</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -582,7 +725,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00107">107</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Refreshes the topic selector with new topic names. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00081">81</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -608,7 +759,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00189">189</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Saves the currently filtered cloud and reloads it to the left visualizer. Used when using multiple filters on the same point cloud. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00152">152</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -634,7 +793,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00126">126</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Saves a filtered cloud. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00092">92</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -660,7 +827,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00198">198</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Loads a .STL file and converts it to a point cloud. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00159">159</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -686,7 +861,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00113">113</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Subscribes to a selected topic. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00087">87</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -712,7 +895,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00255">255</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Tester button. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">check</td><td>clicked event </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00209">209</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -738,7 +929,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00371">371</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if filter_box changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00300">300</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -764,7 +963,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00302">302</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if slider_1 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00236">236</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -790,7 +997,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00318">318</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if slider_2 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00250">250</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -816,7 +1031,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00333">333</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if slider_3 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00264">264</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -842,7 +1065,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00350">350</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if spinBox_1 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00279">279</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -868,7 +1099,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00357">357</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if spinBox_2 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00286">286</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -894,7 +1133,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00364">364</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Runs if spinBox_3 changes value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>the new value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00293">293</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -920,7 +1167,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00089">89</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Recieves 3 point clouds from the ROS node. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">clouds</td><td>a list of 3 point clouds </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00067">67</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -962,7 +1217,17 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00378">378</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Method that sets new parameters for the selected filter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">labels</td><td>label names </td></tr>
+    <tr><td class="paramname">show</td><td>which label/spinbox/slider should show </td></tr>
+    <tr><td class="paramname">stepsAndRange</td><td>step and range for spinbox/slider </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00307">307</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -988,7 +1253,15 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00408">408</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
+<p>Sets a new visualizer object to the GUI. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">vis</td><td>the new visualizer </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="main__window_8cpp_source.html#l00336">336</a> of file <a class="el" href="main__window_8cpp_source.html">main_window.cpp</a>.</p>
 
 </div>
 </div>
@@ -1011,7 +1284,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00114">114</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>Vector of camera positions. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00227">227</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1033,7 +1308,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00115">115</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>Flag for changing filter in the GUI. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00228">228</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1055,7 +1332,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00112">112</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>The point cloud on the left. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00225">225</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1077,7 +1356,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00113">113</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>The point cloud on the right. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00226">226</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1099,7 +1380,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00111">111</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p><a class="el" href="classqt__master_1_1PointCloudManipulator.html" title="The PointCloudManipulator class contains a number of filtering methods, algorithms and matching metho...">PointCloudManipulator</a> object instance. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00224">224</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1121,7 +1404,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00106">106</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p><a class="el" href="classqt__master_1_1QNode.html" title="The QNode class is a ROS node that deals with the communication between the robots, camera outputs etc. ">QNode</a> object instance. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00219">219</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1143,7 +1428,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00104">104</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>The UI object (contains the .ui file) </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00217">217</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1165,7 +1452,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00109">109</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>The left visualizer. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00222">222</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1187,7 +1476,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00110">110</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>The right visualizer. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00223">223</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1209,7 +1500,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00107">107</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>Widget to contain the left visualizer. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00220">220</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1231,7 +1524,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00108">108</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
+<p>Widget to contain the right visualizer. </p>
+
+<p>Definition at line <a class="el" href="main__window_8hpp_source.html#l00221">221</a> of file <a class="el" href="main__window_8hpp_source.html">main_window.hpp</a>.</p>
 
 </div>
 </div>
@@ -1245,7 +1540,7 @@ Private Attributes</h2></td></tr>
 <hr size="1"><div style="align: right;">
 <a href="http://wiki.ros.org/qt_master">qt_master</a><br />
 Author(s): Sindre</br />
-<small>autogenerated on Thu May 26 2016 16:01:50</small>
+<small>autogenerated on Sat May 28 2016 16:43:15</small>
 </div>
 </body>
 </html>

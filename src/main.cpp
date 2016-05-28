@@ -1,27 +1,14 @@
-/**
- * @file /src/main.cpp
- *
- * @brief Qt based gui.
- *
- * @date November 2010
- **/
-/*****************************************************************************
-** Includes
-*****************************************************************************/
-
 #include <QtGui>
 #include <QApplication>
 #include "../include/qt_master/main_window.hpp"
 
-/*****************************************************************************
-** Main
-*****************************************************************************/
-
+/*!
+ * \brief Main method for the program. Starts the application.
+ * \param argc Arguments.
+ * \param argv Arguments.
+ * \return Returns 1 if shut down correct, 0 otherwise.
+ */
 int main(int argc, char **argv) {
-
-    /*********************
-    ** Qt
-    **********************/
     QApplication app(argc, argv);
     qt_master::MainWindow w(argc,argv);
     w.show();
